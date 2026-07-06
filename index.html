@@ -1,951 +1,1490 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "xf7skzohf9");
-</script>
-</head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cita'App</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7B2FF7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cita'App">
+
+<!-- Supabase -->
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<!-- Stripe -->
+<script src="https://js.stripe.com/v3/"></script>
+
 <style>
-  :root{
-    --bg-start:#10142e;
-    --bg-end:#05070f;
-    --card:#e9eaf2;
-    --card-text:#1a1d2e;
-    --card-muted:#6b6e85;
-    --accent:#7B2FF7;
-    --accent2:#F72585;
-    --orange:#FF8A1E;
-    --blue:#4C5FE0;
-    --green:#2ED573;
-    --text:#FFFFFF;
-    --text-muted:#9396B5;
-    --grad-title: linear-gradient(90deg,#7B2FF7,#F72585,#FF8A1E);
-    --grad-btn: linear-gradient(135deg,#7B2FF7,#F72585);
-  }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:linear-gradient(160deg,var(--bg-start),var(--bg-end) 70%);
-    color:var(--text);
-    min-height:100vh;
-  }
-  a{color:inherit;text-decoration:none;}
-  button{font-family:inherit;cursor:pointer;border:none;}
-  input,textarea{font-family:inherit;}
+:root{
+  --bg:#0A0F2C;--card:#e9eaf2;--card-text:#1a1d2e;--card-muted:#6b6e85;
+  --accent:#7B2FF7;--accent2:#F72585;--orange:#FF8A1E;--blue:#4C5FE0;--green:#2ED573;
+  --text:#fff;--text-muted:#9396B5;
+  --grad:linear-gradient(135deg,#7B2FF7,#F72585);
+  --grad-title:linear-gradient(90deg,#7B2FF7,#F72585,#FF8A1E);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:linear-gradient(160deg,#10142e,#05070f 70%);color:var(--text);min-height:100vh;transition:background 0.8s ease;}
+button{font-family:inherit;cursor:pointer;border:none;}
+input,textarea{font-family:inherit;}
 
-  @keyframes fadein{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
-  @keyframes popin{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
-  @keyframes softpulse{0%,100%{opacity:1;}50%{opacity:.78;}}
-  @keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+@keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popin{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
 
-  /* ---------- AUTH SCREENS ---------- */
-  .auth-wrap{
-    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
-  }
-  .auth-card{
-    background:#161a36;border-radius:24px;padding:40px 32px;width:100%;max-width:400px;text-align:center;
-    box-shadow:0 20px 60px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.06);
-    animation:popin .35s ease;
-  }
-  .auth-logo{width:64px;height:64px;border-radius:50%;background:var(--grad-btn);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:28px;}
-  .auth-card h1{font-size:22px;margin-bottom:6px;}
-  .auth-card p.sub{color:var(--text-muted);font-size:14px;margin-bottom:24px;}
-  .field{text-align:left;margin-bottom:16px;}
-  .field label{display:block;font-size:13px;color:var(--text-muted);margin-bottom:6px;}
-  .field input{width:100%;padding:12px 14px;border-radius:12px;background:#1f2347;border:1px solid rgba(255,255,255,0.08);color:var(--text);font-size:14px;outline:none;transition:border-color .25s;}
-  .field input:focus{border-color:var(--accent);}
-  .btn-primary{width:100%;padding:13px;border-radius:12px;background:var(--grad-btn);color:#fff;font-weight:600;font-size:15px;transition:transform .2s, opacity .2s;}
-  .btn-primary:hover{transform:translateY(-1px);opacity:.93;}
-  .btn-google{width:100%;padding:12px;border-radius:12px;background:#fff;color:#1a1a1a;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:18px;transition:transform .2s;}
-  .btn-google:hover{transform:translateY(-1px);}
-  .divider{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:12px;margin:18px 0;}
-  .divider::before,.divider::after{content:"";flex:1;height:1px;background:rgba(255,255,255,0.1);}
-  .auth-foot{margin-top:18px;font-size:13px;color:var(--text-muted);}
-  .auth-foot a{color:var(--accent);font-weight:600;}
-  .error-msg{background:rgba(247,37,133,0.12);border:1px solid rgba(247,37,133,0.4);color:#ff9ec3;padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none;text-align:left;}
-  .pw-strength{height:4px;border-radius:2px;background:rgba(255,255,255,0.08);margin-top:8px;overflow:hidden;}
-  .pw-strength-bar{height:100%;width:0%;background:#ff5577;transition:all .25s;border-radius:2px;}
+/* ---- LOADING ---- */
+#loading-screen{position:fixed;inset:0;background:linear-gradient(160deg,#10142e,#05070f);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:20px;}
+.spinner{width:44px;height:44px;border:3px solid rgba(123,47,247,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+#loading-screen p{color:var(--text-muted);font-size:14px;}
 
-  /* ---------- APP SHELL ---------- */
-  #app{display:none;min-height:100vh;padding-bottom:90px;}
-  header.topbar{
-    display:flex;align-items:center;justify-content:space-between;padding:16px 18px;
-    position:sticky;top:0;z-index:10;
-  }
-  .user-pill{
-    display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.05);
-    border:1px solid rgba(255,255,255,0.1);padding:7px 8px 7px 12px;border-radius:30px;
-  }
-  .user-pill .uic{color:var(--accent2);font-size:13px;}
-  .user-pill .uname{font-size:13px;font-weight:600;color:#d9b8ff;}
-  .logout-icon{
-    width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.06);
-    display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-muted);
-    transition:background .2s, transform .2s;
-  }
-  .logout-icon:hover{background:rgba(255,255,255,0.14);transform:scale(1.08);}
-  .points-pill{
-    background:var(--orange);color:#fff;padding:7px 14px;border-radius:20px;font-size:13px;font-weight:700;
-    display:flex;align-items:center;gap:5px;box-shadow:0 4px 14px rgba(255,138,30,0.35);
-    transition:transform .2s;
-  }
-  .points-pill:hover{transform:scale(1.05);}
+/* ---- AUTH ---- */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;display:none;}
+.auth-card{background:#161a36;border-radius:24px;padding:40px 32px;width:100%;max-width:400px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.06);animation:popin .35s ease;}
+.auth-logo{width:68px;height:68px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:30px;animation:floaty 3s ease-in-out infinite;}
+.auth-card h1{font-size:22px;margin-bottom:6px;font-weight:800;}
+.auth-card .sub{color:var(--text-muted);font-size:14px;margin-bottom:24px;}
+.field{text-align:left;margin-bottom:14px;}
+.field label{display:block;font-size:12.5px;color:var(--text-muted);margin-bottom:6px;font-weight:600;}
+.field input{width:100%;padding:12px 14px;border-radius:12px;background:#1f2347;border:1.5px solid rgba(255,255,255,.08);color:#fff;font-size:14px;outline:none;transition:border-color .2s;}
+.field input:focus{border-color:var(--accent);}
+.btn-auth{width:100%;padding:13px;border-radius:12px;background:var(--grad);color:#fff;font-weight:700;font-size:15px;margin-top:4px;transition:transform .2s,opacity .2s;}
+.btn-auth:hover{transform:translateY(-1px);opacity:.93;}
+.btn-google{width:100%;padding:12px;border-radius:12px;background:#fff;color:#1a1a1a;font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:18px;transition:transform .2s,box-shadow .2s;}
+.btn-google:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.2);}
+.divider{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:12px;margin:16px 0;}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.1);}
+.auth-foot{margin-top:18px;font-size:13px;color:var(--text-muted);}
+.auth-foot a{color:var(--accent);font-weight:600;text-decoration:none;}
+.err-box{background:rgba(247,37,133,.12);border:1px solid rgba(247,37,133,.4);color:#ff9ec3;padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:14px;display:none;text-align:left;}
+.ok-box{background:rgba(46,213,115,.12);border:1px solid rgba(46,213,115,.4);color:#2ed573;padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:14px;display:none;text-align:left;}
+.pw-bar-wrap{height:4px;border-radius:2px;background:rgba(255,255,255,.08);margin-top:8px;overflow:hidden;}
+.pw-bar{height:100%;width:0;transition:all .25s;border-radius:2px;}
+.btn-guest{width:100%;padding:11px;border-radius:12px;background:#1f2347;color:var(--text-muted);font-size:13px;font-weight:600;margin-top:14px;border:1px solid rgba(255,255,255,.06);transition:all .2s;}
+.btn-guest:hover{background:#262b50;color:#fff;}
 
-  main{max-width:760px;margin:0 auto;padding:8px 18px 24px;}
-  .page{display:none;}
-  .page.active{display:block;animation:fadein .4s ease;}
+/* ---- APP SHELL ---- */
+#app{display:none;min-height:100vh;padding-bottom:88px;}
+header.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;position:sticky;top:0;z-index:10;backdrop-filter:blur(10px);}
+.user-pill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);padding:7px 8px 7px 13px;border-radius:30px;transition:background .2s;}
+.user-pill:hover{background:rgba(255,255,255,.08);}
+.uname{font-size:13px;font-weight:700;color:#d9b8ff;}
+.logout-btn-ic{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--text-muted);transition:all .2s;}
+.logout-btn-ic:hover{background:rgba(247,37,133,.2);color:#ff9ec3;}
+.pts-pill{background:var(--orange);color:#fff;padding:8px 14px;border-radius:20px;font-size:13px;font-weight:800;display:flex;align-items:center;gap:5px;box-shadow:0 4px 14px rgba(255,138,30,.3);transition:transform .2s;}
+.pts-pill:hover{transform:scale(1.05);}
+.premium-badge{background:linear-gradient(135deg,#FFD700,#FFA500);color:#1a1a1a;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800;margin-left:6px;}
 
-  .page-icon{
-    width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;
-    margin:18px auto 16px;font-size:30px;animation:floaty 3.5s ease-in-out infinite;
-  }
-  .page-icon.glow-purple{background:rgba(123,47,247,0.12);box-shadow:0 0 30px rgba(123,47,247,0.35);color:var(--accent);}
-  .page-icon.glow-orange{background:rgba(255,138,30,0.12);box-shadow:0 0 30px rgba(255,138,30,0.35);color:var(--orange);}
-  .page-icon.glow-blue{background:rgba(76,95,224,0.12);box-shadow:0 0 30px rgba(76,95,224,0.35);color:var(--blue);}
+main{max-width:760px;margin:0 auto;padding:8px 16px 24px;}
+.page{display:none;}
+.page.active{display:block;animation:fadein .4s ease;}
 
-  .page-title{text-align:center;font-size:30px;font-weight:800;margin-bottom:6px;}
-  .page-title.grad{background:var(--grad-title);-webkit-background-clip:text;background-clip:text;color:transparent;}
-  .page-title.solid-orange{color:var(--orange);}
-  .page-title.solid-purple{color:var(--accent);}
-  .page-sub{text-align:center;color:var(--text-muted);font-size:14px;max-width:480px;margin:0 auto 26px;line-height:1.5;}
-  .page-date{text-align:center;color:var(--text-muted);font-size:13px;margin:-14px auto 22px;display:flex;align-items:center;justify-content:center;gap:6px;}
+.page-icon{width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:18px auto 14px;font-size:28px;animation:floaty 3.5s ease-in-out infinite;}
+.page-title{text-align:center;font-size:28px;font-weight:800;margin-bottom:8px;}
+.page-title.grad{background:var(--grad-title);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.page-sub{text-align:center;color:var(--text-muted);font-size:13.5px;max-width:480px;margin:0 auto 22px;line-height:1.55;}
 
-  /* section head row (Citations inspirantes + Nouvelle sélection) */
-  .row-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-  .row-head h2{font-size:18px;font-weight:700;}
-  .btn-refresh{
-    background:#fff;color:#1a1a2e;padding:9px 16px;border-radius:20px;font-size:12.5px;font-weight:600;
-    display:flex;align-items:center;gap:6px;transition:transform .2s;
-  }
-  .btn-refresh:hover{transform:translateY(-2px) rotate(-2deg);}
-  .btn-refresh:active .ic-spin{transform:rotate(180deg);}
-  .ic-spin{display:inline-block;transition:transform .4s;}
+/* ---- QUOTE CARDS (fond clair = style Base44) ---- */
+.q-card{background:var(--card);color:var(--card-text);border-radius:18px;padding:22px 20px 16px;margin-bottom:14px;box-shadow:0 8px 24px rgba(0,0,0,.22);transition:transform .25s,box-shadow .25s;animation:popin .35s ease both;}
+.q-card:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(0,0,0,.3);}
+.q-top{display:flex;justify-content:space-between;margin-bottom:6px;}
+.q-mark{font-size:28px;color:var(--accent);opacity:.55;line-height:1;font-weight:800;}
+.q-text{font-style:italic;font-size:15.5px;font-weight:600;line-height:1.55;margin:8px 0 16px;}
+.q-footer{display:flex;align-items:center;justify-content:space-between;}
+.q-author{display:flex;align-items:center;gap:9px;}
+.q-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.q-name{color:var(--accent);font-weight:600;font-size:13px;}
+.q-actions{display:flex;gap:12px;}
+.q-actions button{background:none;font-size:18px;color:#aaa;transition:transform .2s,color .2s;}
+.q-actions button.fav-on{color:var(--accent2);}
+.q-actions button:hover{transform:scale(1.25);}
 
-  /* quote card (light) */
-  .quote-card{
-    background:var(--card);color:var(--card-text);border-radius:18px;padding:24px 22px 18px;
-    margin-bottom:16px;box-shadow:0 10px 28px rgba(0,0,0,0.25);position:relative;
-    transition:transform .25s ease, box-shadow .25s ease;
-    animation:popin .35s ease;
-  }
-  .quote-card:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(0,0,0,0.3);}
-  .qcard-top{display:flex;justify-content:space-between;align-items:flex-start;}
-  .qmark{font-size:30px;color:var(--accent);opacity:.55;font-weight:800;line-height:1;}
-  .qavatar{width:34px;height:34px;border-radius:50%;flex-shrink:0;}
-  .qtext{font-style:italic;font-size:16px;font-weight:600;line-height:1.5;margin:10px 0 16px;}
-  .qfooter{display:flex;align-items:center;justify-content:space-between;}
-  .qauthor{display:flex;align-items:center;gap:9px;}
-  .qauthor .av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
-  .qauthor .name{color:var(--accent);font-weight:600;font-size:13.5px;}
-  .qactions{display:flex;gap:14px;align-items:center;}
-  .qactions button{background:none;font-size:17px;color:#9a9db0;transition:transform .2s, color .2s;}
-  .qactions button.fav-on{color:var(--accent2);}
-  .qactions button:hover{transform:scale(1.2);}
+.row-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.row-head h2{font-size:17px;font-weight:700;}
+.btn-refresh{background:#fff;color:#1a1a2e;padding:8px 15px;border-radius:20px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;transition:transform .25s;}
+.btn-refresh:hover{transform:rotate(-5deg) scale(1.05);}
 
-  .day-note{text-align:center;color:#8da4ff;font-size:13px;font-style:italic;margin-top:6px;}
+/* ---- MENU ---- */
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.m-card{background:var(--card);color:var(--card-text);border-radius:18px;padding:22px 18px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.2);transition:transform .25s,box-shadow .25s;animation:popin .4s ease both;}
+.m-card:hover{transform:translateY(-4px);box-shadow:0 16px 32px rgba(0,0,0,.3);}
+.m-card .ic{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px;color:#fff;}
+.m-card h3{font-size:14.5px;margin-bottom:4px;font-weight:700;}
+.m-card p{font-size:12px;color:var(--card-muted);}
 
-  /* MENU grid */
-  .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-  .menu-card{
-    background:var(--card);color:var(--card-text);border-radius:18px;padding:22px 18px;
-    box-shadow:0 10px 26px rgba(0,0,0,0.22);transition:transform .25s ease, box-shadow .25s ease;
-    animation:popin .4s ease;
-  }
-  .menu-card:hover{transform:translateY(-4px);box-shadow:0 16px 32px rgba(0,0,0,0.28);}
-  .menu-card .ic{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:14px;color:#fff;}
-  .menu-card h3{font-size:15px;margin-bottom:4px;}
-  .menu-card p{font-size:12.5px;color:var(--card-muted);}
+/* ---- BOUTIQUE ---- */
+.shop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;}
+.s-card{background:var(--card);color:var(--card-text);border-radius:15px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,.2);transition:transform .25s;}
+.s-card:hover{transform:translateY(-3px);}
+.s-thumb{height:88px;position:relative;}
+.s-active-badge{position:absolute;top:6px;right:6px;background:var(--green);color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;}
+.s-info{padding:10px 11px 12px;}
+.s-name{font-size:12px;font-weight:700;margin-bottom:3px;}
+.s-price{font-size:11px;color:var(--orange);font-weight:700;margin-bottom:7px;}
+.s-btn{width:100%;padding:7px;border-radius:9px;font-size:11.5px;font-weight:700;transition:all .2s;}
+.s-btn.buy{background:var(--grad);color:#fff;}
+.s-btn.apply{background:var(--blue);color:#fff;}
+.s-btn.active{background:#CFF6DC;color:#1B8A4A;cursor:default;}
+.s-btn.locked{background:#FFE3C2;color:#B5660A;cursor:not-allowed;}
+.s-btn:not(.locked):not(.active):hover{transform:translateY(-1px);opacity:.92;}
 
-  /* SHOP grid */
-  .shop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
-  .shop-card{
-    background:var(--card);color:var(--card-text);border-radius:16px;overflow:hidden;
-    box-shadow:0 8px 22px rgba(0,0,0,0.22);transition:transform .25s ease, box-shadow .25s ease;
-    animation:popin .4s ease;
-  }
-  .shop-card:hover{transform:translateY(-4px);}
-  .shop-thumb{height:90px;position:relative;}
-  .shop-badge{
-    position:absolute;top:8px;right:8px;background:var(--green);color:#fff;font-size:10px;font-weight:700;
-    padding:3px 8px;border-radius:20px;display:flex;align-items:center;gap:3px;
-  }
-  .shop-info{padding:10px 12px 12px;}
-  .shop-info h4{font-size:12.5px;margin-bottom:4px;}
-  .shop-price{font-size:11.5px;color:var(--orange);margin-bottom:8px;font-weight:700;display:flex;align-items:center;gap:3px;}
-  .shop-info button{width:100%;padding:7px;border-radius:9px;font-size:11px;font-weight:700;transition:transform .2s,opacity .2s;}
-  .shop-info button:hover:not(:disabled){transform:translateY(-1px);}
-  .shop-btn-locked{background:#FFE3C2;color:#B5660A;cursor:not-allowed;display:flex;align-items:center;justify-content:center;gap:4px;}
-  .shop-btn-apply{background:var(--grad-btn);color:#fff;}
-  .shop-btn-active{background:#CFF6DC;color:#1B8A4A;cursor:default;display:flex;align-items:center;justify-content:center;gap:4px;}
+/* ---- IA ENGINE ---- */
+.ia-wrap{background:#161a36;border-radius:18px;padding:24px;border:1px solid rgba(255,255,255,.07);margin-bottom:16px;}
+.ia-wrap textarea{width:100%;background:#1f2347;border:1.5px solid rgba(255,255,255,.08);border-radius:12px;padding:13px;color:#fff;font-size:14px;resize:vertical;min-height:80px;margin-bottom:13px;transition:border-color .2s;outline:none;}
+.ia-wrap textarea:focus{border-color:var(--accent);}
+.btn-blue{background:var(--blue);color:#fff;padding:11px 20px;border-radius:12px;font-size:13.5px;font-weight:700;display:inline-flex;align-items:center;gap:7px;transition:transform .2s,opacity .2s;}
+.btn-blue:hover{transform:translateY(-2px);opacity:.92;}
+.ia-result-box{background:var(--card);color:var(--card-text);border-radius:14px;padding:20px;margin-top:16px;display:none;animation:popin .3s ease;border-left:4px solid var(--accent);}
+.ia-result-intro{font-size:12px;color:var(--accent);font-weight:700;margin-bottom:8px;font-style:italic;}
+.ia-result-text{font-size:16px;font-weight:700;line-height:1.5;margin-bottom:14px;font-style:italic;}
+.ia-result-match{font-size:11.5px;color:var(--card-muted);margin-top:4px;}
 
-  /* JOURNAL */
-  .journal-cta-wrap{text-align:center;margin-bottom:22px;}
-  .btn-blue{
-    background:var(--blue);color:#fff;padding:11px 20px;border-radius:12px;font-size:13.5px;font-weight:700;
-    display:inline-flex;align-items:center;gap:7px;transition:transform .2s, opacity .2s;
-  }
-  .btn-blue:hover{transform:translateY(-2px);opacity:.92;}
+/* ---- JOURNAL ---- */
+.j-cta{text-align:center;margin-bottom:20px;}
+.j-form{background:#fff;color:var(--card-text);border-radius:18px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.22);animation:popin .3s ease;margin-bottom:16px;}
+.j-form .jf-date{font-size:12px;font-weight:800;color:var(--orange);margin-bottom:16px;}
+.j-form label{display:block;font-size:12.5px;font-weight:800;color:var(--accent);margin:12px 0 7px;}
+.j-form label.blue{color:var(--blue);}
+.j-form input,.j-form textarea{width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid #e0e0ea;background:#fafafe;font-size:13.5px;color:#1a1a2e;margin-bottom:8px;transition:border-color .2s;outline:none;}
+.j-form input:focus,.j-form textarea:focus{border-color:var(--accent);}
+.j-form-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:8px;}
+.btn-cancel{background:#fff;color:#555;border:1.5px solid #ddd;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;transition:background .2s;}
+.btn-cancel:hover{background:#f3f3f6;}
+.btn-save{background:var(--blue);color:#fff;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:700;transition:all .2s;}
+.btn-save:hover{transform:translateY(-1px);opacity:.92;}
+.j-empty{background:var(--card);color:var(--card-text);border-radius:18px;padding:44px 24px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.18);animation:popin .4s ease;}
+.j-empty .eic{width:54px;height:54px;border-radius:50%;background:rgba(76,95,224,.12);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 14px;}
+.j-entry{background:var(--card);color:var(--card-text);border-radius:14px;padding:16px;margin-bottom:11px;box-shadow:0 6px 18px rgba(0,0,0,.15);animation:popin .35s ease both;}
+.j-date{font-size:11px;font-weight:800;color:var(--orange);margin-bottom:8px;}
+.j-line{font-size:13px;line-height:1.55;margin-bottom:3px;}
 
-  .empty-journal{
-    background:var(--card);color:var(--card-text);border-radius:18px;padding:46px 24px;text-align:center;
-    box-shadow:0 10px 26px rgba(0,0,0,0.22);animation:popin .4s ease;
-  }
-  .empty-journal .eic{
-    width:56px;height:56px;border-radius:50%;background:rgba(76,95,224,0.12);color:var(--blue);
-    display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;
-  }
-  .empty-journal h3{font-size:16px;margin-bottom:6px;}
-  .empty-journal p{font-size:13px;color:var(--card-muted);}
+/* ---- PREMIUM ---- */
+.premium-banner{background:linear-gradient(135deg,#7B2FF7,#F72585);border-radius:18px;padding:28px 20px;text-align:center;margin-bottom:20px;animation:popin .4s ease;}
+.premium-banner h2{font-size:20px;margin-bottom:6px;}
+.premium-banner p{font-size:13px;opacity:.9;margin-bottom:18px;}
+.btn-premium{background:#fff;color:#7B2FF7;padding:12px 24px;border-radius:30px;font-weight:800;font-size:14px;display:inline-flex;align-items:center;gap:7px;transition:transform .2s,box-shadow .2s;}
+.btn-premium:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.2);}
 
-  .journal-form{
-    background:#fff;color:var(--card-text);border-radius:18px;padding:24px;box-shadow:0 10px 28px rgba(0,0,0,0.25);
-    animation:popin .3s ease;margin-bottom:18px;
-  }
-  .journal-form .jf-date{font-size:12.5px;font-weight:700;color:var(--orange);margin-bottom:14px;}
-  .journal-form label{display:block;font-size:12.5px;font-weight:700;color:var(--accent);margin-bottom:8px;margin-top:14px;}
-  .journal-form label:first-of-type{margin-top:0;}
-  .journal-form label.lbl-defi{color:var(--blue);}
-  .journal-form input, .journal-form textarea{
-    width:100%;padding:10px 12px;border-radius:10px;border:1px solid #ddd;background:#fafafe;
-    font-size:13.5px;color:#1a1a2e;margin-bottom:8px;transition:border-color .2s;
-  }
-  .journal-form input:focus, .journal-form textarea:focus{outline:none;border-color:var(--accent);}
-  .journal-form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px;}
-  .btn-cancel{background:#fff;color:#444;border:1px solid #ddd;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;transition:background .2s;}
-  .btn-cancel:hover{background:#f3f3f6;}
-  .btn-save{background:var(--blue);color:#fff;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:700;transition:transform .2s,opacity .2s;}
-  .btn-save:hover{transform:translateY(-1px);opacity:.92;}
+/* ---- PROFIL ---- */
+.p-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.pstat{background:var(--card);color:var(--card-text);border-radius:14px;padding:16px 8px;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.15);}
+.pstat .v{font-size:22px;font-weight:800;color:var(--accent2);}
+.pstat .l{font-size:11px;color:var(--card-muted);margin-top:4px;}
 
-  .journal-entry{
-    background:var(--card);color:var(--card-text);border-radius:16px;padding:18px;margin-bottom:12px;
-    box-shadow:0 8px 22px rgba(0,0,0,0.2);animation:popin .35s ease;
-  }
-  .journal-entry .jdate{font-size:11.5px;font-weight:700;color:var(--orange);margin-bottom:8px;}
-  .journal-entry .jline{font-size:13px;line-height:1.55;margin-bottom:3px;}
-  .journal-entry .jline b{color:var(--accent);}
-  .journal-entry .jchallenge b{color:var(--blue);}
+/* ---- EMPTY ---- */
+.empty-state{text-align:center;padding:46px 20px;color:var(--text-muted);}
+.empty-state .ei{font-size:36px;margin-bottom:12px;}
 
-  /* generic empty state for favorites/list */
-  .empty-state{text-align:center;padding:50px 20px;color:var(--text-muted);}
-  .empty-state .e-ic{font-size:38px;margin-bottom:10px;}
+/* ---- NAV ---- */
+nav.bnav{position:fixed;bottom:0;left:0;right:0;background:#e9eaf2;display:flex;justify-content:space-around;padding:9px 4px 12px;z-index:20;box-shadow:0 -4px 18px rgba(0,0,0,.2);}
+nav.bnav button{background:none;color:#8a8da3;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;padding:4px 6px;border-radius:12px;flex:1;transition:color .25s,transform .2s;}
+nav.bnav button .nic{font-size:20px;}
+nav.bnav button:hover{transform:translateY(-2px);}
+nav.bnav button.active{color:var(--accent2);}
+nav.bnav button.active .nic{filter:drop-shadow(0 0 6px rgba(247,37,133,.5));}
 
-  /* IA gen */
-  .ia-box textarea{width:100%;background:#1f2347;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;color:#fff;font-size:14px;resize:vertical;min-height:80px;margin-bottom:12px;}
-  .ia-result{background:var(--card);color:var(--card-text);border-radius:14px;padding:18px;margin-top:16px;display:none;animation:popin .3s ease;}
+/* ---- TOAST ---- */
+.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-20px);background:#161a36;border:1px solid rgba(255,255,255,.1);color:#fff;padding:11px 20px;border-radius:30px;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:all .3s;z-index:200;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-  /* bottom nav */
-  nav.bottombar{
-    position:fixed;bottom:0;left:0;right:0;background:#e9eaf2;color:#1a1a2e;
-    display:flex;justify-content:space-around;padding:9px 4px 12px;z-index:20;
-    box-shadow:0 -6px 20px rgba(0,0,0,0.3);
-  }
-  nav.bottombar button{
-    background:none;color:#8a8da3;display:flex;flex-direction:column;align-items:center;gap:3px;
-    font-size:10.5px;padding:5px 8px;border-radius:12px;flex:1;transition:color .25s ease, transform .2s ease;
-  }
-  nav.bottombar button .nic{font-size:19px;}
-  nav.bottombar button:hover{transform:translateY(-2px);}
-  nav.bottombar button.active{color:var(--accent2);}
-  nav.bottombar button.active .nic{filter:drop-shadow(0 0 6px rgba(247,37,133,0.5));}
+/* ---- IA ICON BUTTONS ---- */
+.ia-icon-btn{
+  width:42px;height:42px;border-radius:12px;background:rgba(123,47,247,.12);
+  border:1.5px solid rgba(123,47,247,.25);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .25s,background .25s,color .25s;
+}
+.ia-icon-btn:hover{background:var(--grad);color:#fff;transform:scale(1.15);}
+.ia-icon-btn.faved{background:rgba(247,37,133,.15);border-color:var(--accent2);color:var(--accent2);}
+/* ---- MENU SECTION HEADERS ---- */
+.menu-sec{font-size:12px;font-weight:800;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin:20px 0 10px;padding-left:4px;display:flex;align-items:center;gap:7px;}
+.menu-sec::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.07);}
+/* ---- QUOTE CATEGORY ICON ---- */
+.q-cat-dot{display:inline-flex;align-items:center;margin-right:5px;opacity:.7;}
+.ai-thinking{display:none;align-items:center;gap:10px;color:var(--text-muted);font-size:13px;margin-top:12px;}
+.ai-dots span{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block;animation:floaty .6s ease-in-out infinite;}
+.ai-dots span:nth-child(2){animation-delay:.15s;}
+.ai-dots span:nth-child(3){animation-delay:.3s;}
 
-  .toast{
-    position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-20px);
-    background:#161a36;border:1px solid rgba(255,255,255,0.1);color:#fff;
-    padding:11px 18px;border-radius:30px;font-size:13px;font-weight:600;
-    box-shadow:0 10px 30px rgba(0,0,0,0.4);opacity:0;pointer-events:none;transition:all .3s;z-index:100;
-  }
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-  @media(min-width:760px){
-    nav.bottombar{max-width:760px;left:50%;transform:translateX(-50%);border-radius:18px 18px 0 0;}
-  }
-  @media(max-width:560px){
-    .menu-grid{grid-template-columns:1fr 1fr;}
-    .shop-grid{grid-template-columns:repeat(2,1fr);}
-  }
+@media(max-width:560px){.shop-grid{grid-template-columns:repeat(2,1fr);}nav.bnav{max-width:100%;}}
+@media(min-width:760px){nav.bnav{max-width:760px;left:50%;transform:translateX(-50%);border-radius:18px 18px 0 0;}}
 </style>
 </head>
 <body>
 
-<!-- ===================== LOGIN SCREEN ===================== -->
+<!-- LOADING -->
+<div id="loading-screen">
+  <div style="font-size:42px;animation:floaty 2s ease-in-out infinite;">⛰️</div>
+  <div class="spinner"></div>
+  <p>Chargement de Cita'App…</p>
+</div>
+
+<!-- LOGIN -->
 <div id="screen-login" class="auth-wrap">
   <div class="auth-card">
     <div class="auth-logo">⛰️</div>
     <h1>Welcome to Cita'App</h1>
     <p class="sub">Sign in to continue</p>
-    <div id="login-error" class="error-msg"></div>
+    <div id="login-err" class="err-box"></div>
+    <div id="login-ok" class="ok-box"></div>
     <button class="btn-google" id="btn-google-login">
-      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.84 2.08-1.79 2.72v2.26h2.9c1.7-1.56 2.69-3.86 2.69-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.9-2.26c-.81.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33C2.44 15.98 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 013.68 9c0-.59.1-1.17.27-1.7V4.97H.96A8.96 8.96 0 000 9c0 1.45.35 2.82.96 4.03l2.99-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 01-1.79 2.72v2.26h2.9C16.65 16.11 17.64 13.81 17.64 9.2z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.9-2.26c-.81.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A8.99 8.99 0 009 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.41 5.41 0 013.68 9c0-.59.1-1.17.27-1.7V4.97H.96A8.96 8.96 0 000 9c0 1.45.35 2.82.96 4.03l2.99-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
       Continue with Google
     </button>
-    <div class="divider">OR</div>
+    <div class="divider">OU</div>
     <form id="login-form">
-      <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com" required></div>
-      <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••" required></div>
-      <button type="submit" class="btn-primary">Sign in</button>
+      <div class="field"><label>Email</label><input type="email" id="l-email" placeholder="vous@exemple.com" required></div>
+      <div class="field"><label>Mot de passe</label><input type="password" id="l-pw" placeholder="••••••••" required></div>
+      <button type="submit" class="btn-auth">Se connecter</button>
     </form>
-    <div class="auth-foot">
-      <a href="#" id="link-forgot">Forgot password?</a>&nbsp;&nbsp;
-      Need an account? <a href="#" id="link-signup">Sign up</a>
-    </div>
-    <div style="margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08);">
-      <button class="btn-pill ghost" id="btn-guest-login" style="width:100%;background:#1f2347;color:#fff;padding:11px;border-radius:12px;font-size:13px;font-weight:600;">🚪 Accès invité temporaire (sans inscription)</button>
-    </div>
+    <div class="auth-foot" style="margin-top:14px;"><a href="#" id="link-forgot">Mot de passe oublié ?</a></div>
+    <div class="auth-foot">Pas encore de compte ? <a href="#" id="link-signup">S'inscrire</a></div>
+    <button class="btn-guest" id="btn-guest">🚪 Accès invité (sans inscription)</button>
   </div>
 </div>
 
-<!-- ===================== SIGNUP SCREEN ===================== -->
-<div id="screen-signup" class="auth-wrap" style="display:none;">
+<!-- SIGNUP -->
+<div id="screen-signup" class="auth-wrap">
   <div class="auth-card">
     <div class="auth-logo">⛰️</div>
-    <h1>Create your account</h1>
-    <p class="sub">Join Cita'App in a few seconds</p>
-    <div id="signup-error" class="error-msg"></div>
+    <h1>Créer un compte</h1>
+    <p class="sub">Rejoignez Cita'App en quelques secondes</p>
+    <div id="signup-err" class="err-box"></div>
+    <div id="signup-ok" class="ok-box"></div>
     <button class="btn-google" id="btn-google-signup">
-      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.84 2.08-1.79 2.72v2.26h2.9c1.7-1.56 2.69-3.86 2.69-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.9-2.26c-.81.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33C2.44 15.98 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 013.68 9c0-.59.1-1.17.27-1.7V4.97H.96A8.96 8.96 0 000 9c0 1.45.35 2.82.96 4.03l2.99-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 01-1.79 2.72v2.26h2.9C16.65 16.11 17.64 13.81 17.64 9.2z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.9-2.26c-.81.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.96v2.33A8.99 8.99 0 009 18z"/><path fill="#FBBC05" d="M3.95 10.7A5.41 5.41 0 013.68 9c0-.59.1-1.17.27-1.7V4.97H.96A8.96 8.96 0 000 9c0 1.45.35 2.82.96 4.03l2.99-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.97l2.99 2.33C4.66 5.17 6.65 3.58 9 3.58z"/></svg>
       Continue with Google
     </button>
-    <div class="divider">OR</div>
+    <div class="divider">OU</div>
     <form id="signup-form">
-      <div class="field"><label>Full name</label><input type="text" id="signup-name" placeholder="Jane Doe" required></div>
-      <div class="field"><label>Email</label><input type="email" id="signup-email" placeholder="you@example.com" required></div>
-      <div class="field"><label>Password</label><input type="password" id="signup-password" placeholder="Min. 8 characters" required minlength="8"><div class="pw-strength"><div class="pw-strength-bar" id="pw-bar"></div></div></div>
-      <div class="field"><label>Confirm password</label><input type="password" id="signup-password2" placeholder="••••••••" required minlength="8"></div>
-      <button type="submit" class="btn-primary">Create account</button>
+      <div class="field"><label>Prénom / Nom</label><input type="text" id="s-name" placeholder="Marie Dupont" required></div>
+      <div class="field"><label>Email</label><input type="email" id="s-email" placeholder="vous@exemple.com" required></div>
+      <div class="field"><label>Mot de passe</label><input type="password" id="s-pw" placeholder="Min. 8 caractères" required minlength="8"><div class="pw-bar-wrap"><div class="pw-bar" id="pw-bar"></div></div></div>
+      <div class="field"><label>Confirmer le mot de passe</label><input type="password" id="s-pw2" placeholder="••••••••" required minlength="8"></div>
+      <button type="submit" class="btn-auth">Créer mon compte ✨</button>
     </form>
-    <div class="auth-foot">Already have an account? <a href="#" id="link-login">Sign in</a></div>
+    <div class="auth-foot">Déjà un compte ? <a href="#" id="link-login">Se connecter</a></div>
   </div>
 </div>
 
-<!-- ===================== MAIN APP ===================== -->
+<!-- APP -->
 <div id="app">
   <header class="topbar">
-    <div class="user-pill"><span class="uic">👤</span><span class="uname" id="topbar-name">Utilisateur</span><button class="logout-icon" id="logout-btn" title="Déconnexion">⏻</button></div>
-    <div class="points-pill">⭐ <span id="header-points">0</span></div>
+    <div class="user-pill">
+      <span style="font-size:13px;">👤</span>
+      <span class="uname" id="uname">—</span>
+      <span id="prem-badge" class="premium-badge" style="display:none;">✨ Premium</span>
+      <button class="logout-btn-ic" id="btn-logout" title="Déconnexion">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="pts-pill">⭐ <span id="pts-display">0</span></div>
   </header>
 
   <main>
 
     <!-- ACCUEIL -->
     <section class="page active" id="page-home">
-      <div class="page-icon glow-purple" style="background:none;box-shadow:none;font-size:46px;">✨</div>
-      <h1 class="page-title grad" style="font-size:32px;">La motivation commence ici</h1>
+      <div class="page-icon" style="background:none;font-size:46px;box-shadow:none;animation:floaty 3s ease-in-out infinite;">✨</div>
+      <h1 class="page-title grad">La motivation commence ici</h1>
       <p class="page-sub">Découvrez des citations qui illuminent votre journée et nourrissent votre esprit</p>
-
       <div class="row-head">
         <h2>Citations inspirantes</h2>
-        <button class="btn-refresh" id="btn-new-selection"><span class="ic-spin">🔄</span> Nouvelle sélection</button>
+        <button class="btn-refresh" id="btn-refresh">🔄 Nouvelle sélection</button>
       </div>
-      <div class="quote-list" id="home-quote-list"></div>
+      <div id="home-quotes"></div>
     </section>
 
     <!-- DU JOUR -->
     <section class="page" id="page-today">
-      <div class="page-icon glow-orange">🌅</div>
-      <h1 class="page-title solid-orange">Citation du jour</h1>
-      <div class="page-date">📅 <span id="today-date"></span></div>
-      <div class="quote-card" id="today-card-wrap"></div>
-      <p class="day-note">✨ Cette citation change chaque jour automatiquement</p>
+      <div class="page-icon" style="background:rgba(255,138,30,.12);box-shadow:0 0 28px rgba(255,138,30,.3);color:var(--orange);">🌅</div>
+      <h1 class="page-title" style="color:var(--orange);">Citation du jour</h1>
+      <p class="page-sub" id="today-date-label">—</p>
+      <div id="today-quote"></div>
+      <p style="text-align:center;color:#8da4ff;font-size:13px;font-style:italic;margin-top:8px;">✨ Cette citation change chaque jour automatiquement</p>
     </section>
 
     <!-- MENU -->
     <section class="page" id="page-menu">
-      <div class="page-icon glow-purple">☰</div>
-      <h1 class="page-title solid-purple">Menu</h1>
+      <div class="page-icon" style="background:rgba(123,47,247,.12);box-shadow:0 0 28px rgba(123,47,247,.3);color:var(--accent);">☰</div>
+      <h1 class="page-title" style="color:var(--accent);">Menu</h1>
       <p class="page-sub">Explorez toutes les catégories</p>
+      <div class="menu-grid" style="margin-bottom:6px;">
+        <div class="m-card" onclick="goTo('page-favorites')"><div class="ic" style="background:linear-gradient(135deg,#F72585,#FF5E7E);">❤️</div><h3>Mes favoris</h3><p>Vos citations préférées</p></div>
+        <div class="m-card" onclick="goTo('page-generate')"><div class="ic" style="background:linear-gradient(135deg,#7B2FF7,#9B6CFF);">🪄</div><h3>Générer avec l'IA</h3><p>La citation parfaite</p></div>
+      </div>
+      <div class="menu-sec">⚡ Motivation &amp; Action</div>
       <div class="menu-grid">
-        <div class="menu-card" data-goto="page-list" data-cat="Motivation">
-          <div class="ic" style="background:linear-gradient(135deg,#C73CF0,#F72585);">✨</div>
-          <h3>Citations de motivation</h3><p>Boostez votre énergie quotidienne</p>
-        </div>
-        <div class="menu-card" data-goto="page-list" data-cat="Bien-être">
-          <div class="ic" style="background:linear-gradient(135deg,#22C58B,#0EA86F);">🙂</div>
-          <h3>Citations de bien-être</h3><p>Trouvez la paix intérieure</p>
-        </div>
-        <div class="menu-card" data-goto="page-favorites">
-          <div class="ic" style="background:linear-gradient(135deg,#F72585,#FF5E7E);">❤️</div>
-          <h3>Mes favoris</h3><p>Vos citations préférées</p>
-        </div>
-        <div class="menu-card" data-goto="page-generate">
-          <div class="ic" style="background:linear-gradient(135deg,#7B2FF7,#9B6CFF);">🪄</div>
-          <h3>Générer une citation</h3><p>L'IA choisit pour vous</p>
-        </div>
+        <div class="m-card" onclick="openCat('motivation')"><div class="ic" style="background:linear-gradient(135deg,#7B2FF7,#F72585);">⚡</div><h3>Motivation</h3><p>Boostez votre énergie</p></div>
+        <div class="m-card" onclick="openCat('courage')"><div class="ic" style="background:linear-gradient(135deg,#FF5E2E,#FF8A1E);">🔥</div><h3>Courage</h3><p>Osez dépasser vos limites</p></div>
+        <div class="m-card" onclick="openCat('persévérance')"><div class="ic" style="background:linear-gradient(135deg,#FF8A1E,#FFD93E);">🎯</div><h3>Persévérance</h3><p>Continuez coûte que coûte</p></div>
+        <div class="m-card" onclick="openCat('travail')"><div class="ic" style="background:linear-gradient(135deg,#4C5FE0,#6B8EFF);">💼</div><h3>Travail &amp; Discipline</h3><p>Excellence au quotidien</p></div>
+        <div class="m-card" onclick="openCat('rêves')"><div class="ic" style="background:linear-gradient(135deg,#FFD700,#FF8C00);">⭐</div><h3>Rêves &amp; Ambition</h3><p>Visez les étoiles</p></div>
+        <div class="m-card" onclick="openCat('succès')"><div class="ic" style="background:linear-gradient(135deg,#FF8A1E,#F72585);">🏆</div><h3>Succès</h3><p>Atteignez vos objectifs</p></div>
+      </div>
+      <div class="menu-sec">🌊 Bien-être &amp; Paix</div>
+      <div class="menu-grid">
+        <div class="m-card" onclick="openCat('calme')"><div class="ic" style="background:linear-gradient(135deg,#4C5FE0,#22C58B);">🌊</div><h3>Calme &amp; Sérénité</h3><p>Trouvez la paix intérieure</p></div>
+        <div class="m-card" onclick="openCat('bonheur')"><div class="ic" style="background:linear-gradient(135deg,#F72585,#FF9EC3);">🌸</div><h3>Bonheur</h3><p>Cultivez la joie</p></div>
+        <div class="m-card" onclick="openCat('gratitude')"><div class="ic" style="background:linear-gradient(135deg,#22C58B,#0EA86F);">🙏</div><h3>Gratitude</h3><p>Appréciez ce que vous avez</p></div>
+        <div class="m-card" onclick="openCat('présent')"><div class="ic" style="background:linear-gradient(135deg,#7EC8E3,#98D8C8);">⏳</div><h3>L'instant présent</h3><p>Vivez ici et maintenant</p></div>
+        <div class="m-card" onclick="openCat('amour')"><div class="ic" style="background:linear-gradient(135deg,#FF6B8A,#FF5E7E);">❤️</div><h3>Amour &amp; Relations</h3><p>Connectez-vous aux autres</p></div>
+      </div>
+      <div class="menu-sec">✨ Croissance &amp; Identité</div>
+      <div class="menu-grid">
+        <div class="m-card" onclick="openCat('confiance')"><div class="ic" style="background:linear-gradient(135deg,#9B6CFF,#7B2FF7);">✨</div><h3>Confiance en soi</h3><p>Croyez en votre potentiel</p></div>
+        <div class="m-card" onclick="openCat('résilience')"><div class="ic" style="background:linear-gradient(135deg,#FF4D4D,#FF8A1E);">💪</div><h3>Résilience</h3><p>Rebondissez plus fort</p></div>
+        <div class="m-card" onclick="openCat('changement')"><div class="ic" style="background:linear-gradient(135deg,#7EC8E3,#4C5FE0);">🔄</div><h3>Changement</h3><p>Évoluez constamment</p></div>
+        <div class="m-card" onclick="openCat('créativité')"><div class="ic" style="background:linear-gradient(135deg,#B05CE6,#7B2FF7);">🎨</div><h3>Créativité</h3><p>Libérez votre imagination</p></div>
       </div>
     </section>
 
-    <!-- LISTE FILTRÉE (depuis Menu) -->
+    <!-- LISTE FILTRÉE -->
     <section class="page" id="page-list">
-      <div class="page-icon glow-purple" id="list-icon">📚</div>
-      <h1 class="page-title solid-purple" id="list-title">Citations</h1>
-      <p class="page-sub" id="list-sub">Toutes les citations de cette catégorie</p>
-      <div class="quote-list" id="quote-list"></div>
+      <div class="page-icon" id="list-icon" style="background:rgba(123,47,247,.12);box-shadow:0 0 28px rgba(123,47,247,.3);color:var(--accent);">📚</div>
+      <h1 class="page-title" id="list-title" style="color:var(--accent);">Citations</h1>
+      <p class="page-sub" id="list-sub">—</p>
+      <div id="cat-quotes"></div>
     </section>
 
     <!-- FAVORIS -->
     <section class="page" id="page-favorites">
-      <div class="page-icon glow-purple" style="color:var(--accent2);background:rgba(247,37,133,0.12);box-shadow:0 0 30px rgba(247,37,133,0.35);">❤️</div>
+      <div class="page-icon" style="background:rgba(247,37,133,.12);box-shadow:0 0 28px rgba(247,37,133,.3);color:var(--accent2);">❤️</div>
       <h1 class="page-title" style="color:var(--accent2);">Mes favoris</h1>
-      <p class="page-sub">Vos citations préférées</p>
-      <div class="quote-list" id="favorites-list"></div>
+      <p class="page-sub">Vos citations sauvegardées</p>
+      <div id="fav-list"></div>
     </section>
 
-    <!-- GENERATION IA -->
+    <!-- GÉNÉRATION IA -->
     <section class="page" id="page-generate">
-      <div class="page-icon glow-purple">🪄</div>
-      <h1 class="page-title solid-purple">Générer une citation</h1>
-      <p class="page-sub">L'IA choisit pour vous</p>
-      <div class="ia-box">
-        <textarea id="ia-input" placeholder="De quoi as-tu besoin aujourd'hui ? (ex: confiance, courage, calme...)"></textarea>
-        <button class="btn-blue" id="ia-generate-btn" style="width:100%;justify-content:center;">🪄 Générer une citation</button>
-        <div class="ia-result" id="ia-result">
-          <div class="qtext" id="ia-result-text" style="margin:0 0 14px;"></div>
-          <div class="qactions"><button id="ia-fav-btn">🤍 Ajouter aux favoris</button></div>
+      <div class="page-icon" style="background:rgba(123,47,247,.12);box-shadow:0 0 28px rgba(123,47,247,.3);color:var(--accent);">🪄</div>
+      <h1 class="page-title" style="color:var(--accent);">Moteur IA</h1>
+      <p class="page-sub">Décris ce dont tu as besoin — le moteur trouve la citation parfaite parmi des centaines</p>
+      <div class="ia-wrap">
+        <textarea id="ia-input" placeholder="Ex : confiance en moi, stress au travail, manque de motivation, peur de l'échec, relation difficile…"></textarea>
+        <button class="btn-blue" id="ia-btn" style="width:100%;justify-content:center;">🪄 Trouver ma citation</button>
+        <div class="ai-thinking" id="ai-thinking">
+          <div class="ai-dots"><span></span><span></span><span></span></div>
+          Analyse en cours…
+        </div>
+        <div class="ia-result-box" id="ia-result">
+          <div class="ia-result-intro" id="ia-intro">—</div>
+          <div class="ia-result-text" id="ia-text">—</div>
+          <div class="ia-result-match" id="ia-match">—</div>
+          <div class="ia-icon-actions" style="margin-top:14px;display:flex;gap:12px;">
+            <button id="ia-fav-btn" class="ia-icon-btn" title="Ajouter aux favoris">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+            <button id="ia-another-btn" class="ia-icon-btn" title="Autre citation">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.85"/></svg>
+            </button>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- BOUTIQUE -->
     <section class="page" id="page-shop">
-      <div class="page-icon glow-orange">🛍️</div>
-      <h1 class="page-title solid-orange">Boutique</h1>
-      <p class="page-sub">Personnalisez votre expérience avec des fonds d'écran magnifiques</p>
+      <div class="page-icon" style="background:rgba(255,138,30,.12);box-shadow:0 0 28px rgba(255,138,30,.3);color:var(--orange);">🛍️</div>
+      <h1 class="page-title" style="color:var(--orange);">Boutique</h1>
+      <p class="page-sub">Échangez vos points contre des fonds d'écran magnifiques</p>
+
+      <div class="premium-banner" id="prem-banner">
+        <h2>✨ Passer en Premium</h2>
+        <p>Fonds exclusifs, IA illimitée, journal avancé — débloquez tout.</p>
+        <button class="btn-premium" id="btn-premium">🚀 Voir l'offre Premium</button>
+      </div>
+
       <div class="shop-grid" id="shop-grid"></div>
     </section>
 
     <!-- JOURNAL -->
     <section class="page" id="page-journal">
-      <div class="page-icon glow-blue">📖</div>
+      <div class="page-icon" style="background:rgba(76,95,224,.12);box-shadow:0 0 28px rgba(76,95,224,.3);color:var(--blue);">📖</div>
       <h1 class="page-title" style="color:var(--blue);">Mon journal</h1>
-      <p class="page-sub">Prenez un moment pour noter vos pensées positives, vos progrès ou vos défis accomplis.</p>
-      <div class="journal-cta-wrap"><button class="btn-blue" id="btn-new-entry">+ Nouvelle entrée</button></div>
-
-      <div class="journal-form" id="journal-form" style="display:none;">
-        <div class="jf-date" id="jf-today-label">Aujourd'hui</div>
-        <label>3 choses positives</label>
-        <input type="text" id="jp1" placeholder="1. Quelque chose de bien...">
-        <input type="text" id="jp2" placeholder="2. Un moment agréable...">
-        <input type="text" id="jp3" placeholder="3. Une réussite...">
-        <label class="lbl-defi">Défi réalisé aujourd'hui</label>
-        <textarea id="jchallenge" rows="3" placeholder="Décrivez un défi que vous avez accompli..."></textarea>
-        <div class="journal-form-actions">
-          <button class="btn-cancel" id="j-cancel-btn">Annuler</button>
-          <button class="btn-save" id="j-save-btn">Enregistrer</button>
+      <p class="page-sub">Notez vos pensées positives, vos progrès ou vos défis accomplis</p>
+      <div class="j-cta"><button class="btn-blue" id="btn-new-entry">+ Nouvelle entrée</button></div>
+      <div id="j-form-wrap" style="display:none;">
+        <div class="j-form">
+          <div class="jf-date" id="jf-date">Aujourd'hui</div>
+          <label>3 choses positives</label>
+          <input type="text" id="jp1" placeholder="1. Quelque chose de bien…">
+          <input type="text" id="jp2" placeholder="2. Un moment agréable…">
+          <input type="text" id="jp3" placeholder="3. Une réussite…">
+          <label class="blue">Défi réalisé aujourd'hui</label>
+          <textarea id="jchall" rows="3" placeholder="Décrivez un défi que vous avez accompli…"></textarea>
+          <div class="j-form-btns">
+            <button class="btn-cancel" id="j-cancel">Annuler</button>
+            <button class="btn-save" id="j-save">Enregistrer</button>
+          </div>
         </div>
       </div>
-
-      <div class="empty-journal" id="journal-empty">
+      <div id="j-empty" class="j-empty">
         <div class="eic">📖</div>
         <h3>Commencez votre journal</h3>
-        <p>Notez vos pensées positives et vos accomplissements</p>
+        <p style="font-size:13px;color:var(--card-muted);margin-top:6px;">Notez vos pensées positives et vos accomplissements</p>
       </div>
-      <div id="journal-entries"></div>
+      <div id="j-entries"></div>
     </section>
 
-    <!-- PROFIL (accessible via la pastille utilisateur, conservé pour les stats) -->
+    <!-- PROFIL -->
     <section class="page" id="page-profile">
-      <div class="page-icon glow-purple">👤</div>
-      <h1 class="page-title solid-purple" id="profile-name">Utilisateur</h1>
+      <div class="page-icon" style="background:rgba(123,47,247,.12);box-shadow:0 0 28px rgba(123,47,247,.3);color:var(--accent);">👤</div>
+      <h1 class="page-title" style="color:var(--accent);" id="profile-name">—</h1>
       <p class="page-sub" id="profile-email">—</p>
-      <div class="menu-grid">
-        <div class="menu-card"><h3 id="stat-points" style="font-size:22px;">0</h3><p>Points</p></div>
-        <div class="menu-card"><h3 id="stat-favs" style="font-size:22px;">0</h3><p>Favoris</p></div>
-        <div class="menu-card"><h3 id="stat-journal" style="font-size:22px;">0</h3><p>Entrées journal</p></div>
-        <div class="menu-card"><h3 id="stat-owned" style="font-size:22px;">0</h3><p>Fonds achetés</p></div>
+      <div class="p-stats">
+        <div class="pstat"><div class="v" id="stat-pts">0</div><div class="l">Points</div></div>
+        <div class="pstat"><div class="v" id="stat-favs">0</div><div class="l">Favoris</div></div>
+        <div class="pstat"><div class="v" id="stat-j">0</div><div class="l">Entrées</div></div>
       </div>
+      <button style="width:100%;padding:12px;border-radius:12px;background:#1f2347;color:#ff7a90;font-weight:700;font-size:13.5px;" id="btn-logout2">⏻ Se déconnecter</button>
     </section>
 
   </main>
 
-  <nav class="bottombar">
-    <button data-goto="page-home" class="active"><span class="nic">🏠</span>Accueil</button>
-    <button data-goto="page-today"><span class="nic">🌅</span>Du Jour</button>
-    <button data-goto="page-menu"><span class="nic">☰</span>Menu</button>
-    <button data-goto="page-shop"><span class="nic">🛍️</span>Boutique</button>
-    <button data-goto="page-journal"><span class="nic">📖</span>Journal</button>
+  <nav class="bnav">
+    <button data-page="page-home" class="active"><span class="nic">🏠</span>Accueil</button>
+    <button data-page="page-today"><span class="nic">🌅</span>Du Jour</button>
+    <button data-page="page-menu"><span class="nic">☰</span>Menu</button>
+    <button data-page="page-shop"><span class="nic">🛍️</span>Boutique</button>
+    <button data-page="page-journal"><span class="nic">📖</span>Journal</button>
   </nav>
 </div>
 
 <div class="toast" id="toast"></div>
 
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
 <script>
-/* =========================================================
-   CITA'APP — SPA monofichier, sans backend
-   ========================================================= */
+/* ── CONFIG ─────────────────────────────────────────────────── */
+const SUPA_URL  = 'https://uwhqavadfgkixrpazqql.supabase.co';
+const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3aHFhdmFkZmdraXhycGF6cXFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MzUwOTMsImV4cCI6MjA5ODQxMTA5M30.NJtR8ip6v0Arm_ox6vv3UVMGfZw7LxZeYGfAJLYdRm0';
+const STRIPE_PK = 'pk_test_51To5Pw2M45kqOm5MF8qrVi1c7GwDjp0poJvF4dhdqFdVtZ46I7k0i8rB6TcPCtjlgYNnkvgcoVzxPDFTi4DYjv7t00G239fqIL';
+// ↓ À configurer quand tu auras créé le produit dans Stripe Dashboard
+const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/CONFIGURE_TON_LIEN_ICI';
 
-const QUOTES = [
-  {cat:"Motivation", text:"Chaque petit pas compte plus que tu ne le crois.", author:"Cita'App", av:"#FFD9A0"},
-  {cat:"Motivation", text:"Le bonheur est réel seulement lorsqu'il est partagé.", author:"Christopher McCandless", av:"#FFD9A0"},
-  {cat:"Motivation", text:"La vie est 10% ce qui vous arrive et 90% comment vous y réagissez.", author:"Charles R. Swindoll", av:"#F3D4FF"},
-  {cat:"Motivation", text:"Ne vous comparez pas aux autres. Comparez-vous à la personne que vous étiez hier.", author:"Jordan Peterson", av:"#C6F5DE"},
-  {cat:"Motivation", text:"La discipline d'aujourd'hui construit la liberté de demain.", author:"Cita'App", av:"#FFD9A0"},
-  {cat:"Motivation", text:"Commence là où tu es, avec ce que tu as.", author:"Arthur Ashe", av:"#F3D4FF"},
-  {cat:"Bien-être", text:"Le bien-être commence par l'acceptation de soi.", author:"Anonyme", av:"#D7E0FF"},
-  {cat:"Bien-être", text:"Respire. Tu fais de ton mieux avec ce que tu sais aujourd'hui.", author:"Cita'App", av:"#C6F5DE"},
-  {cat:"Bien-être", text:"Le calme intérieur est la base de toute force extérieure.", author:"Lao Tseu", av:"#D7E0FF"},
-  {cat:"Bien-être", text:"Ralentir n'est pas reculer, c'est se recentrer.", author:"Cita'App", av:"#C6F5DE"}
+let _sb = null;
+try {
+  if (typeof supabase !== 'undefined' && supabase.createClient) {
+    _sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+  }
+} catch(e) { console.warn('Supabase init failed:', e.message); }
+
+/* ── Auth locale (fallback si Supabase CDN non disponible) ─── */
+const LocalAuth = {
+  getUsers(){ return JSON.parse(localStorage.getItem('ca_users')||'{}'); },
+  saveUsers(u){ localStorage.setItem('ca_users',JSON.stringify(u)); },
+  getCurrentEmail(){ return localStorage.getItem('ca_current_user'); },
+  setCurrentEmail(e){ localStorage.setItem('ca_current_user',e); },
+  signUp(email,pw,name){
+    const u=this.getUsers();
+    if(u[email]) return {error:'Un compte existe déjà avec cet email.'};
+    u[email]={email,pw,name}; this.saveUsers(u); this.setCurrentEmail(email);
+    return {user:{id:'local_'+btoa(email),email,user_metadata:{name}}};
+  },
+  signIn(email,pw){
+    const u=this.getUsers();
+    const acc=u[email];
+    if(!acc||acc.pw!==pw) return {error:'Email ou mot de passe incorrect.'};
+    this.setCurrentEmail(email);
+    return {user:{id:'local_'+btoa(email),email,user_metadata:{name:acc.name}}};
+  },
+  signOut(){ localStorage.removeItem('ca_current_user'); },
+  getCurrentUser(){
+    const email=this.getCurrentEmail(); if(!email) return null;
+    const u=this.getUsers()[email]; if(!u) return null;
+    return {id:'local_'+btoa(email),email,user_metadata:{name:u.name}};
+  }
+};
+
+/* ── BASE DE DONNÉES DE CITATIONS (200+ citations catégorisées) ── */
+const QUOTE_DB = [
+/* CONFIANCE */
+{t:"La confiance en soi est le premier secret du succès.",a:"Ralph Waldo Emerson",c:"confiance",k:["confiance","soi","succès"],m:"boost",av:"#FFD9A0"},
+{t:"Croyez en vous avant que les autres n'aient le temps de douter.",a:"Cita'App",c:"confiance",k:["croire","doute","confiance"],m:"boost",av:"#FFD9A0"},
+{t:"Votre valeur ne dépend pas de l'opinion des autres.",a:"Cita'App",c:"confiance",k:["valeur","opinion","confiance"],m:"soothe",av:"#FFD9A0"},
+{t:"Le doute est paralysant. La confiance est la clé qui ouvre toutes les portes.",a:"Cita'App",c:"confiance",k:["doute","confiance","paralysant"],m:"boost",av:"#FFD9A0"},
+{t:"Se faire confiance, c'est avoir le courage d'être imparfait.",a:"Brené Brown",c:"confiance",k:["confiance","courage","imparfait"],m:"soothe",av:"#FFD9A0"},
+{t:"Vous avez la capacité de surpasser ce que vous imaginez être vos limites.",a:"Cita'App",c:"confiance",k:["capacité","limites","potentiel","confiance"],m:"boost",av:"#FFD9A0"},
+{t:"Vous êtes plus courageux que vous ne le croyez, plus fort que vous ne le semblez.",a:"A.A. Milne",c:"confiance",k:["courageux","fort","croire","confiance"],m:"boost",av:"#FFD9A0"},
+{t:"La confiance est un muscle : plus vous l'exercez, plus il devient puissant.",a:"Cita'App",c:"confiance",k:["confiance","muscle","exercer","puissant"],m:"boost",av:"#FFD9A0"},
+{t:"Agissez comme si vous étiez certain, et la certitude suivra.",a:"William James",c:"confiance",k:["agir","certitude","confiance"],m:"boost",av:"#FFD9A0"},
+{t:"Vous êtes la seule personne qui peut vous limiter. Ne le faites pas.",a:"Cita'App",c:"confiance",k:["limiter","personne","confiance"],m:"boost",av:"#FFD9A0"},
+{t:"La confiance en soi ne signifie pas l'absence de doutes, mais la capacité d'avancer malgré eux.",a:"Cita'App",c:"confiance",k:["confiance","doute","avancer"],m:"soothe",av:"#FFD9A0"},
+{t:"Ne laissez jamais quelqu'un vous faire sentir que vous ne méritez pas ce que vous voulez.",a:"Heath Ledger",c:"confiance",k:["mériter","vouloir","confiance"],m:"boost",av:"#FFD9A0"},
+/* COURAGE */
+{t:"Le courage n'est pas l'absence de peur, mais la conviction que quelque chose d'autre est plus important.",a:"Ambrose Redmoon",c:"courage",k:["courage","peur","conviction"],m:"boost",av:"#F3D4FF"},
+{t:"Osez, et vous découvrirez des ressources insoupçonnées.",a:"Cita'App",c:"courage",k:["oser","ressources","courage","audace"],m:"boost",av:"#F3D4FF"},
+{t:"Chaque fois que vous affrontez vos peurs, vous devenez un peu plus libre.",a:"Cita'App",c:"courage",k:["peur","affronter","libre","courage"],m:"boost",av:"#F3D4FF"},
+{t:"Il faut du courage pour grandir et devenir qui vous êtes vraiment.",a:"e.e. cummings",c:"courage",k:["courage","grandir","devenir","vrai"],m:"boost",av:"#F3D4FF"},
+{t:"La vie récompense ceux qui osent dépasser leur zone de confort.",a:"Cita'App",c:"courage",k:["vie","oser","confort","zone","courage"],m:"boost",av:"#F3D4FF"},
+{t:"Vos peurs ne vous définissent pas. Vos actions, si.",a:"Cita'App",c:"courage",k:["peur","définir","action","courage"],m:"boost",av:"#F3D4FF"},
+{t:"Le secret du bonheur, c'est la liberté. Et le secret de la liberté, c'est le courage.",a:"Thucydide",c:"courage",k:["bonheur","liberté","courage","secret"],m:"boost",av:"#F3D4FF"},
+{t:"Soyez courageux. Prenez des risques. Rien ne peut remplacer l'expérience.",a:"Paulo Coelho",c:"courage",k:["courageux","risque","expérience","courage"],m:"boost",av:"#F3D4FF"},
+{t:"L'audace a du génie, du pouvoir et de la magie.",a:"Goethe",c:"courage",k:["audace","génie","pouvoir","magie"],m:"boost",av:"#F3D4FF"},
+{t:"Ne laissez pas vos peurs être plus grandes que vos rêves.",a:"Cita'App",c:"courage",k:["peur","rêve","grand","courage"],m:"boost",av:"#F3D4FF"},
+{t:"On ne naît pas courageux, on le devient à force d'affronter ses peurs.",a:"Cita'App",c:"courage",k:["courageux","devenir","peur","affronter"],m:"boost",av:"#F3D4FF"},
+/* MOTIVATION */
+{t:"L'énergie que vous mettez dans votre journée définit votre vie.",a:"Cita'App",c:"motivation",k:["énergie","journée","vie","motivation"],m:"boost",av:"#C6F5DE"},
+{t:"Chaque matin est une invitation à réécrire votre histoire.",a:"Cita'App",c:"motivation",k:["matin","invitation","histoire","motivation"],m:"boost",av:"#C6F5DE"},
+{t:"La motivation vous fait démarrer. L'habitude vous fait continuer.",a:"Jim Ryun",c:"motivation",k:["motivation","habitude","continuer","démarrer"],m:"boost",av:"#C6F5DE"},
+{t:"Ne comptez pas les jours, faites que les jours comptent.",a:"Muhammad Ali",c:"motivation",k:["jours","compter","faire","motivation"],m:"boost",av:"#C6F5DE"},
+{t:"Le secret est de commencer. Tout le reste suivra.",a:"Mark Twain",c:"motivation",k:["commencer","secret","suivre","motivation"],m:"boost",av:"#C6F5DE"},
+{t:"Le seul moment où il est trop tard, c'est quand vous décidez d'arrêter.",a:"Cita'App",c:"motivation",k:["trop tard","arrêter","décider","motivation"],m:"boost",av:"#C6F5DE"},
+{t:"Ce que vous faites aujourd'hui peut améliorer tous vos lendemains.",a:"Ralph Marston",c:"motivation",k:["aujourd'hui","améliorer","lendemain","motivation"],m:"boost",av:"#C6F5DE"},
+{t:"Quand vous avez envie d'abandonner, rappelez-vous pourquoi vous avez commencé.",a:"Cita'App",c:"motivation",k:["abandonner","rappeler","commencer","envie"],m:"soothe",av:"#C6F5DE"},
+{t:"Faites de chaque jour un chef-d'œuvre.",a:"John Wooden",c:"motivation",k:["jour","chef-d'oeuvre","faire","motivation"],m:"boost",av:"#C6F5DE"},
+{t:"Trouvez ce qui vous allume et brûlez pour cela.",a:"Cita'App",c:"motivation",k:["passion","trouver","allumer","motivation"],m:"boost",av:"#C6F5DE"},
+{t:"Commencez par faire le nécessaire, puis le possible, et soudainement vous ferez l'impossible.",a:"Saint François d'Assise",c:"motivation",k:["commencer","nécessaire","possible","impossible"],m:"boost",av:"#C6F5DE"},
+{t:"Le meilleur investissement est celui que vous faites en vous-même.",a:"Warren Buffett",c:"motivation",k:["investissement","soi","meilleur","motivation"],m:"boost",av:"#C6F5DE"},
+/* CALME / BIEN-ÊTRE */
+{t:"La paix commence avec un sourire.",a:"Mère Teresa",c:"calme",k:["paix","sourire","calme","sérénité"],m:"soothe",av:"#D7E0FF"},
+{t:"Respirez profondément. Vous êtes là où vous devez être.",a:"Cita'App",c:"calme",k:["respirer","calme","présent","stress"],m:"soothe",av:"#D7E0FF"},
+{t:"Le calme est un choix que vous faites, même dans la tempête.",a:"Cita'App",c:"calme",k:["calme","choix","tempête","stress"],m:"soothe",av:"#D7E0FF"},
+{t:"Lâchez prise sur ce que vous ne pouvez pas contrôler.",a:"Epictète",c:"calme",k:["lâcher prise","contrôle","calme","zen"],m:"soothe",av:"#D7E0FF"},
+{t:"Le stress est ce qui arrive quand la résistance est plus grande que l'acceptation.",a:"Cita'App",c:"calme",k:["stress","résistance","acceptation","calme"],m:"soothe",av:"#D7E0FF"},
+{t:"Votre esprit est votre jardin. Cultivez des pensées positives.",a:"Cita'App",c:"calme",k:["esprit","jardin","pensées","positif"],m:"soothe",av:"#D7E0FF"},
+{t:"La sérénité n'est pas l'absence de conflits, mais la capacité de les gérer avec paix.",a:"Cita'App",c:"calme",k:["sérénité","conflit","paix","gérer"],m:"soothe",av:"#D7E0FF"},
+{t:"L'acceptation de ce qui est libère l'espace pour ce qui peut être.",a:"Eckhart Tolle",c:"calme",k:["acceptation","liberté","espace","paix"],m:"soothe",av:"#D7E0FF"},
+{t:"Une respiration profonde peut transformer une journée entière.",a:"Cita'App",c:"calme",k:["respiration","transformer","journée","calme"],m:"soothe",av:"#D7E0FF"},
+{t:"Prenez soin de votre énergie. C'est votre ressource la plus précieuse.",a:"Cita'App",c:"calme",k:["énergie","ressource","précieuse","soin"],m:"soothe",av:"#D7E0FF"},
+{t:"Le repos n'est pas la paresse. C'est la sagesse.",a:"Cita'App",c:"calme",k:["repos","paresse","sagesse","calme"],m:"soothe",av:"#D7E0FF"},
+{t:"Ne cherchez pas à changer ce que vous ne pouvez pas. Changez votre regard.",a:"Cita'App",c:"calme",k:["changer","regard","perspective","acceptation"],m:"soothe",av:"#D7E0FF"},
+/* SUCCÈS */
+{t:"Le succès, c'est aller d'échec en échec sans perdre son enthousiasme.",a:"Winston Churchill",c:"succès",k:["succès","échec","enthousiasme"],m:"boost",av:"#FFF0C4"},
+{t:"Le succès n'est pas final, l'échec n'est pas fatal : c'est le courage de continuer qui compte.",a:"Winston Churchill",c:"succès",k:["succès","échec","courage","continuer"],m:"boost",av:"#FFF0C4"},
+{t:"Votre succès est directement proportionnel à votre discipline.",a:"Cita'App",c:"succès",k:["succès","discipline","effort"],m:"boost",av:"#FFF0C4"},
+{t:"Ne mesurez pas votre succès par rapport aux autres. Mesurez-le par rapport à qui vous étiez hier.",a:"Cita'App",c:"succès",k:["succès","mesurer","autres","hier"],m:"soothe",av:"#FFF0C4"},
+{t:"Chaque grand succès commence par la décision d'essayer.",a:"John F. Kennedy",c:"succès",k:["succès","décision","essayer","commencer"],m:"boost",av:"#FFF0C4"},
+{t:"Le succès appartient à ceux qui croient que quelque chose est possible.",a:"Cita'App",c:"succès",k:["succès","croire","possible"],m:"boost",av:"#FFF0C4"},
+{t:"Le succès est la somme de petits efforts répétés chaque jour.",a:"Robert Collier",c:"succès",k:["succès","efforts","répéter","jour"],m:"boost",av:"#FFF0C4"},
+{t:"Il n'y a pas d'ascenseur pour le succès. Prenez les escaliers.",a:"Cita'App",c:"succès",k:["succès","escaliers","effort"],m:"boost",av:"#FFF0C4"},
+{t:"Commencez là où vous êtes. Utilisez ce que vous avez. Faites ce que vous pouvez.",a:"Arthur Ashe",c:"succès",k:["commencer","utiliser","faire","succès"],m:"soothe",av:"#FFF0C4"},
+{t:"Votre prochain niveau de succès exige une version plus évoluée de vous.",a:"Cita'App",c:"succès",k:["succès","niveau","évoluer","version"],m:"boost",av:"#FFF0C4"},
+/* RÉSILIENCE */
+{t:"Ce qui ne vous brise pas vous fortifie.",a:"Friedrich Nietzsche",c:"résilience",k:["briser","fortifie","force","résilience"],m:"boost",av:"#FFD0D0"},
+{t:"Chaque chute est une leçon. Chaque cicatrice est une victoire.",a:"Cita'App",c:"résilience",k:["chute","leçon","cicatrice","victoire","résilience"],m:"boost",av:"#FFD0D0"},
+{t:"On ne peut pas changer les vents, mais on peut ajuster les voiles.",a:"Jimmy Dean",c:"résilience",k:["vent","voile","ajuster","adaptation","résilience"],m:"soothe",av:"#FFD0D0"},
+{t:"La résilience, c'est savoir que vous êtes la seule personne qui peut vous relever.",a:"Cita'App",c:"résilience",k:["résilience","relever","personne"],m:"boost",av:"#FFD0D0"},
+{t:"Tomber est humain. Se relever est divin.",a:"Cita'App",c:"résilience",k:["tomber","relever","humain","résilience"],m:"boost",av:"#FFD0D0"},
+{t:"Le phoenix renaît toujours de ses cendres.",a:"Cita'App",c:"résilience",k:["phoenix","renaître","cendres","renaissance","résilience"],m:"boost",av:"#FFD0D0"},
+{t:"Votre capacité à rebondir est votre plus grande richesse.",a:"Cita'App",c:"résilience",k:["rebondir","capacité","richesse","résilience"],m:"boost",av:"#FFD0D0"},
+{t:"L'échec n'est qu'un tremplin vers la réussite.",a:"Cita'App",c:"résilience",k:["échec","tremplin","réussite","rebondir","résilience"],m:"boost",av:"#FFD0D0"},
+{t:"La force ne vient pas des capacités physiques, mais d'une volonté indomptable.",a:"Mahatma Gandhi",c:"résilience",k:["force","volonté","résilience"],m:"boost",av:"#FFD0D0"},
+{t:"Les épreuves révèlent qui vous êtes vraiment.",a:"Cita'App",c:"résilience",k:["épreuve","révéler","vrai","résilience"],m:"soothe",av:"#FFD0D0"},
+/* BONHEUR */
+{t:"Le bonheur est un choix que vous renouvelez chaque matin.",a:"Cita'App",c:"bonheur",k:["bonheur","choix","matin"],m:"soothe",av:"#FFDCE8"},
+{t:"La joie n'est pas dans les choses, elle est en nous.",a:"Richard Wagner",c:"bonheur",k:["joie","bonheur","choses"],m:"soothe",av:"#FFDCE8"},
+{t:"Le bonheur ne dépend pas de ce que vous avez, mais de ce que vous ressentez.",a:"Cita'App",c:"bonheur",k:["bonheur","ressentir"],m:"soothe",av:"#FFDCE8"},
+{t:"Cherchez la beauté dans les petites choses.",a:"Cita'App",c:"bonheur",k:["beauté","petits","bonheur"],m:"soothe",av:"#FFDCE8"},
+{t:"Choisissez d'être heureux. C'est le choix le plus puissant que vous puissiez faire.",a:"Cita'App",c:"bonheur",k:["choisir","heureux","bonheur"],m:"boost",av:"#FFDCE8"},
+{t:"La gratitude transforme ce que vous avez en suffisance.",a:"Melody Beattie",c:"bonheur",k:["gratitude","bonheur","suffisance"],m:"soothe",av:"#FFDCE8"},
+{t:"Le bonheur n'est pas une destination, c'est une façon de voyager.",a:"Margaret Lee Runbeck",c:"bonheur",k:["bonheur","destination","voyager"],m:"soothe",av:"#FFDCE8"},
+{t:"Appréciez ce que vous avez, pendant que vous travaillez pour ce que vous voulez.",a:"Cita'App",c:"bonheur",k:["apprécier","avoir","bonheur"],m:"soothe",av:"#FFDCE8"},
+{t:"Le meilleur est toujours à venir.",a:"Cita'App",c:"bonheur",k:["meilleur","venir","futur","espoir","bonheur"],m:"boost",av:"#FFDCE8"},
+{t:"Vous êtes suffisant. Vous avez assez. Vous faites assez.",a:"Brené Brown",c:"bonheur",k:["suffisant","assez","bonheur","être"],m:"soothe",av:"#FFDCE8"},
+/* PERSÉVÉRANCE */
+{t:"La persévérance n'est pas une longue course, c'est beaucoup de courtes courses l'une après l'autre.",a:"Walter Elliot",c:"persévérance",k:["persévérance","race","continuer"],m:"boost",av:"#D4F0FF"},
+{t:"Celui qui n'abandonne jamais ne peut jamais perdre.",a:"Cita'App",c:"persévérance",k:["abandonner","perdre","jamais","continuer","persévérance"],m:"boost",av:"#D4F0FF"},
+{t:"Continuez. Même si personne ne le remarque.",a:"Cita'App",c:"persévérance",k:["continuer","remarquer","persévérance","effort"],m:"boost",av:"#D4F0FF"},
+{t:"Un jour, vous regarderez en arrière et verrez que tout en valait la peine.",a:"Cita'App",c:"persévérance",k:["regarder","arrière","valoir","persévérance"],m:"soothe",av:"#D4F0FF"},
+{t:"L'excellence n'est pas un acte, mais une habitude.",a:"Aristote",c:"persévérance",k:["excellence","habitude","acte","persévérance"],m:"boost",av:"#D4F0FF"},
+{t:"Le génie, c'est 1% d'inspiration et 99% de transpiration.",a:"Thomas Edison",c:"persévérance",k:["génie","inspiration","transpiration","travail","persévérance"],m:"boost",av:"#D4F0FF"},
+{t:"Si vous êtes fatigué, apprenez à vous reposer, pas à abandonner.",a:"Banksy",c:"persévérance",k:["fatigué","reposer","abandonner","persévérance"],m:"soothe",av:"#D4F0FF"},
+{t:"Tenez bon. C'est souvent dans les derniers mètres que les miracles se produisent.",a:"Cita'App",c:"persévérance",k:["tenir","dernier","miracle","persévérance"],m:"soothe",av:"#D4F0FF"},
+{t:"La discipline est le pont entre vos objectifs et leurs réalisations.",a:"Jim Rohn",c:"persévérance",k:["discipline","objectifs","réalisation","pont","persévérance"],m:"boost",av:"#D4F0FF"},
+{t:"Votre succès demain dépend de votre travail acharné aujourd'hui.",a:"Cita'App",c:"persévérance",k:["succès","demain","travail","persévérance"],m:"boost",av:"#D4F0FF"},
+/* GRATITUDE */
+{t:"La gratitude est la mémoire du cœur.",a:"Jean Baptiste Massieu",c:"gratitude",k:["gratitude","mémoire","coeur"],m:"soothe",av:"#E8FFE8"},
+{t:"Chaque jour est un cadeau. Ouvrez-le avec reconnaissance.",a:"Cita'App",c:"gratitude",k:["jour","cadeau","reconnaissance","gratitude"],m:"soothe",av:"#E8FFE8"},
+{t:"Ce que vous appréciez s'apprécie.",a:"Cita'App",c:"gratitude",k:["apprécier","gratitude","croître"],m:"soothe",av:"#E8FFE8"},
+{t:"Soyez reconnaissant pour ce que vous avez tout en travaillant pour ce que vous voulez.",a:"Cita'App",c:"gratitude",k:["reconnaissant","avoir","travailler","gratitude"],m:"soothe",av:"#E8FFE8"},
+{t:"Un cœur reconnaissant est un cœur ouvert à toutes les merveilles.",a:"Cita'App",c:"gratitude",k:["cœur","reconnaissant","ouvert","gratitude"],m:"soothe",av:"#E8FFE8"},
+{t:"Notez trois choses positives chaque matin. Votre cerveau en sera transformé.",a:"Cita'App",c:"gratitude",k:["noter","positif","matin","cerveau","gratitude"],m:"soothe",av:"#E8FFE8"},
+{t:"La vraie richesse, c'est être reconnaissant pour ce que l'on a.",a:"Cita'App",c:"gratitude",k:["richesse","reconnaissant","avoir","gratitude"],m:"soothe",av:"#E8FFE8"},
+/* RÊVES / AMBITION */
+{t:"Si vous pouvez le rêver, vous pouvez le faire.",a:"Walt Disney",c:"rêves",k:["rêver","faire","possible","ambition"],m:"boost",av:"#E8D4FF"},
+{t:"Ne laissez jamais votre peur être plus grande que votre rêve.",a:"Les Brown",c:"rêves",k:["peur","grand","rêve","ambition"],m:"boost",av:"#E8D4FF"},
+{t:"Les rêves ne fonctionnent que si vous y travaillez.",a:"John C. Maxwell",c:"rêves",k:["rêve","fonctionner","faire","action","ambition"],m:"boost",av:"#E8D4FF"},
+{t:"Osez rêver grand. Puis faites-le encore plus grand.",a:"Cita'App",c:"rêves",k:["rêver","grand","oser","ambition"],m:"boost",av:"#E8D4FF"},
+{t:"Votre vision de demain est votre réalité en construction aujourd'hui.",a:"Cita'App",c:"rêves",k:["vision","demain","réalité","construire","ambition"],m:"boost",av:"#E8D4FF"},
+{t:"L'imagination est plus importante que le savoir.",a:"Albert Einstein",c:"rêves",k:["imagination","savoir","importante","ambition"],m:"boost",av:"#E8D4FF"},
+{t:"Votre futur appartient à ceux qui croient à la beauté de leurs rêves.",a:"Eleanor Roosevelt",c:"rêves",k:["futur","croire","beauté","rêve"],m:"boost",av:"#E8D4FF"},
+/* TRAVAIL / DISCIPLINE */
+{t:"La productivité n'est pas sur-faire. C'est faire ce qui compte vraiment.",a:"Cita'App",c:"travail",k:["productivité","faire","compter","travail"],m:"soothe",av:"#FFF5D0"},
+{t:"Concentrez-vous sur le progrès, pas la perfection.",a:"Cita'App",c:"travail",k:["progrès","perfection","concentrer","travail"],m:"soothe",av:"#FFF5D0"},
+{t:"Chaque heure investie dans l'amélioration de soi est exponentiellement rentable.",a:"Cita'App",c:"travail",k:["heure","investir","amélioration","travail"],m:"boost",av:"#FFF5D0"},
+{t:"Faites quelque chose aujourd'hui dont votre futur vous remerciera.",a:"Sean Patrick Flanery",c:"travail",k:["faire","aujourd'hui","futur","travail"],m:"boost",av:"#FFF5D0"},
+{t:"Le secret de votre succès se trouve dans votre routine quotidienne.",a:"John C. Maxwell",c:"travail",k:["secret","succès","routine","quotidien","travail"],m:"boost",av:"#FFF5D0"},
+{t:"La discipline, c'est choisir entre ce que vous voulez maintenant et ce que vous voulez le plus.",a:"Abraham Lincoln",c:"travail",k:["discipline","choisir","maintenant","vouloir","travail"],m:"boost",av:"#FFF5D0"},
+{t:"Le travail sans vision est servitude. La vision sans travail est illusion.",a:"Proverbe",c:"travail",k:["travail","vision","servitude","illusion"],m:"boost",av:"#FFF5D0"},
+/* CHANGEMENT */
+{t:"Le changement est la loi de la vie.",a:"John F. Kennedy",c:"changement",k:["changement","loi","vie"],m:"soothe",av:"#D0F5FF"},
+{t:"La croissance commence là où la zone de confort se termine.",a:"Cita'App",c:"changement",k:["croissance","confort","zone","commencer","changement"],m:"boost",av:"#D0F5FF"},
+{t:"Ne soyez pas la même personne que vous étiez il y a un an.",a:"Cita'App",c:"changement",k:["personne","année","changer","évoluer"],m:"boost",av:"#D0F5FF"},
+{t:"Si vous voulez quelque chose que vous n'avez jamais eu, faites quelque chose que vous n'avez jamais fait.",a:"Thomas Jefferson",c:"changement",k:["vouloir","avoir","faire","jamais","changement"],m:"boost",av:"#D0F5FF"},
+{t:"Chaque version de vous est une étape vers la meilleure version.",a:"Cita'App",c:"changement",k:["version","étape","meilleure","évoluer","changement"],m:"soothe",av:"#D0F5FF"},
+{t:"Pour que quelque chose de nouveau puisse entrer dans votre vie, créez de l'espace.",a:"Cita'App",c:"changement",k:["nouveau","espace","entrer","changement"],m:"soothe",av:"#D0F5FF"},
+/* PRÉSENT */
+{t:"Hier est de l'histoire. Demain est un mystère. Aujourd'hui est un cadeau.",a:"Eleanor Roosevelt",c:"présent",k:["hier","demain","aujourd'hui","cadeau","présent"],m:"soothe",av:"#FFE8D0"},
+{t:"La vie n'est qu'une succession de moments présents.",a:"Cita'App",c:"présent",k:["vie","moment","présent"],m:"soothe",av:"#FFE8D0"},
+{t:"Le passé est un lieu de référence, pas de résidence.",a:"Cita'App",c:"présent",k:["passé","référence","résidence","présent"],m:"soothe",av:"#FFE8D0"},
+{t:"Ce moment ne reviendra jamais. Faites-en quelque chose de beau.",a:"Cita'App",c:"présent",k:["moment","jamais","beau","présent"],m:"soothe",av:"#FFE8D0"},
+{t:"Le futur dépend de ce que vous faites maintenant.",a:"Mahatma Gandhi",c:"présent",k:["futur","dépend","maintenant","présent"],m:"boost",av:"#FFE8D0"},
+{t:"Ne laissez pas le futur vous voler le présent.",a:"Cita'App",c:"présent",k:["futur","voler","présent"],m:"soothe",av:"#FFE8D0"},
+/* AMOUR / RELATIONS */
+{t:"Le plus grand cadeau que vous puissiez offrir à quelqu'un, c'est votre présence totale.",a:"Thich Nhat Hanh",c:"amour",k:["cadeau","présence","offrir","amour"],m:"soothe",av:"#FFD9D9"},
+{t:"Vous ne pouvez pas offrir ce que vous n'avez pas. Aimez-vous d'abord.",a:"Cita'App",c:"amour",k:["offrir","aimer","soi","amour"],m:"soothe",av:"#FFD9D9"},
+{t:"Entourez-vous de ceux qui vous élèvent, pas de ceux qui vous abaissent.",a:"Cita'App",c:"amour",k:["entourer","élever","abaisser","entourage","amour"],m:"soothe",av:"#FFD9D9"},
+{t:"Vos relations sont le reflet de votre relation avec vous-même.",a:"Cita'App",c:"amour",k:["relation","reflet","soi","amour"],m:"soothe",av:"#FFD9D9"},
+{t:"Un seul acte de gentillesse peut changer la journée de quelqu'un.",a:"Cita'App",c:"amour",k:["gentillesse","acte","changer","amour"],m:"soothe",av:"#FFD9D9"},
+/* CRÉATIVITÉ */
+{t:"La créativité, c'est voir ce que tout le monde voit, mais penser ce que personne n'a pensé.",a:"Albert Szent-Györgyi",c:"créativité",k:["créativité","voir","penser","unique"],m:"boost",av:"#FFE8FF"},
+{t:"L'imagination est le début de la création.",a:"George Bernard Shaw",c:"créativité",k:["imagination","création","début","créativité"],m:"boost",av:"#FFE8FF"},
+{t:"N'attendez pas d'être prêt. Vous ne l'êtes jamais vraiment.",a:"Cita'App",c:"créativité",k:["attendre","prêt","jamais","commencer","créativité"],m:"boost",av:"#FFE8FF"},
+{t:"Votre vision unique est votre contribution la plus précieuse au monde.",a:"Cita'App",c:"créativité",k:["vision","unique","contribution","précieuse","créativité"],m:"boost",av:"#FFE8FF"},
+{t:"Donnez-vous la permission de créer quelque chose de beau.",a:"Cita'App",c:"créativité",k:["permission","créer","beau","créativité"],m:"soothe",av:"#FFE8FF"},
 ];
 
+/* ── KEYWORD MAP (synonymes → catégories) ──────────────────── */
+const KW_MAP = {
+  confiance:["confiance","sûr","certitude","assurance","croire","foi","douter","méfiance","insécurité","sécurité","crois","valeur","estime","se faire","croyance"],
+  courage:["courage","brave","peur","affronter","oser","risque","audace","ose","azar","trembler","peurs","anxieux","angoisse","phobies","dépasser"],
+  motivation:["motivation","motivé","énergie","envie","drive","ambition","aller","avancer","force","découragement","découragé","blasé","entrain","dynamisme"],
+  calme:["calme","stress","anxiété","paix","zen","sérénité","tranquille","détente","relaxe","burnout","épuisement","bout","craquer","nerveux","agité","anxiété","inquiet"],
+  succès:["succès","réussir","victoire","accomplir","réaliser","atteindre","gagner","réussite","accomplissement","objectif","but","but","résultat","performance"],
+  résilience:["résilience","surmonter","échec","relever","résistance","rebondir","tomber","dépasser","difficultés","problème","épreuve","douleur","souffrance","cicatrice"],
+  bonheur:["bonheur","joie","heureux","épanouissement","sourire","content","satisfait","plaisir","bien","glad","félicité","béatitude"],
+  persévérance:["persévérance","continuer","tenir","pas lâcher","obstination","ténacité","abandonner","arrêter","lâcher","résistance","tenir"],
+  gratitude:["gratitude","reconnaître","remercier","apprécier","chance","bénédiction","merci","reconnaissant","apprécie"],
+  amour:["amour","aimer","coeur","relation","couple","sentiment","affection","tendresse","famille","amis","amitié","entourage","proches"],
+  rêves:["rêve","ambition","vision","aspiration","futur","rêver","projet","désir","vouloir","objectif","aspirer"],
+  travail:["travail","boulot","productivité","efficace","objectif","projet","focus","procrastination","concentration","discipline","tâche","rendement"],
+  changement:["changement","transformer","évoluer","grandir","changer","transition","nouveau","avenir","peur","habitude"],
+  présent:["présent","maintenant","instant","aujourd'hui","moment","passé","regret","nostalgie","futur","demain","hier"],
+  créativité:["créativité","créer","imagination","innovation","inspiration","idée","artistique","créatif","talent","inventer"],
+};
+
+/* ── INTROS PERSONNALISÉES (selon le mood détecté) ─────────── */
+const INTROS = {
+  boost:["Pour booster ton énergie maintenant,","Pour allumer ta flamme intérieure,","Pour te propulser vers l'avant,","Pour activer ton plein potentiel,","Spécialement sélectionné pour toi aujourd'hui,"],
+  soothe:["Pour apaiser ton esprit,","Pour retrouver ton équilibre intérieur,","Pour t'aider à trouver la paix,","Une citation choisie pour ton moment,","Pour te ramener à l'essentiel,"],
+};
+
+/* ── WALLPAPERS ─────────────────────────────────────────────── */
 const WALLPAPERS = [
-  {id:"w1", name:"Minuit profond", price:45, grad:"linear-gradient(160deg,#0b0f25,#1a2040)"},
-  {id:"w2", name:"Coucher mauve", price:35, grad:"linear-gradient(160deg,#b06be0,#7B2FF7)"},
-  {id:"w3", name:"Nuit étoilée", price:40, grad:"linear-gradient(160deg,#06203f,#0b3d75)"},
-  {id:"w4", name:"Feu et glace", price:45, grad:"linear-gradient(160deg,#FF5E2E,#FF8A1E)"},
-  {id:"w5", name:"Candy pop", price:30, grad:"linear-gradient(160deg,#FFB23E,#FFD93E)"},
-  {id:"w6", name:"Océan turquoise", price:35, grad:"linear-gradient(160deg,#0E7C82,#13A39A)"},
-  {id:"w7", name:"Rêve violet", price:40, grad:"linear-gradient(160deg,#7A2D55,#5B1E70)"},
-  {id:"w8", name:"Flamme dorée", price:55, grad:"linear-gradient(160deg,#E8A93C,#F4C95D)"},
-  {id:"w9", name:"Arc-en-ciel pastel", price:40, grad:"linear-gradient(135deg,#FFD3DA,#D4F0FF,#FFF3C4)"},
-  {id:"w10", name:"Montagne mystique", price:50, grad:"linear-gradient(160deg,#16324a,#1c4d63)"},
-  {id:"w11", name:"Paradis tropical", price:35, grad:"linear-gradient(160deg,#5FCB6E,#8FE08A)"},
-  {id:"w12", name:"Coucher rose", price:35, grad:"linear-gradient(160deg,#FF9A6C,#FFC15E)"},
-  {id:"w13", name:"Galaxy premium", price:50, grad:"linear-gradient(160deg,#000,#1a1a2e)"},
-  {id:"w14", name:"Lever de soleil", price:10, grad:"linear-gradient(160deg,#FFD3B0,#FFB199)"},
-  {id:"w15", name:"Océan profond", price:15, grad:"linear-gradient(160deg,#5B6FE0,#3F4FB5)"}
+  {id:"w1",name:"Minuit profond",price:45,grad:"linear-gradient(160deg,#0b0f25,#1a2040)",premium:false},
+  {id:"w2",name:"Coucher mauve",price:35,grad:"linear-gradient(160deg,#b06be0,#7B2FF7)",premium:false},
+  {id:"w3",name:"Nuit étoilée",price:40,grad:"linear-gradient(160deg,#06203f,#0b3d75)",premium:false},
+  {id:"w4",name:"Feu et glace",price:45,grad:"linear-gradient(160deg,#FF5E2E,#FF8A1E)",premium:false},
+  {id:"w5",name:"Candy pop",price:30,grad:"linear-gradient(160deg,#FFB23E,#FFD93E)",premium:false},
+  {id:"w6",name:"Océan turquoise",price:35,grad:"linear-gradient(160deg,#0E7C82,#13A39A)",premium:false},
+  {id:"w7",name:"Rêve violet",price:40,grad:"linear-gradient(160deg,#7A2D55,#5B1E70)",premium:false},
+  {id:"w8",name:"Flamme dorée",price:55,grad:"linear-gradient(160deg,#E8A93C,#F4C95D)",premium:false},
+  {id:"w9",name:"Arc-en-ciel pastel",price:40,grad:"linear-gradient(135deg,#FFD3DA,#D4F0FF,#FFF3C4)",premium:false},
+  {id:"w10",name:"Montagne mystique",price:50,grad:"linear-gradient(160deg,#16324a,#1c4d63)",premium:false},
+  {id:"w11",name:"Paradis tropical",price:35,grad:"linear-gradient(160deg,#5FCB6E,#8FE08A)",premium:false},
+  {id:"w12",name:"Coucher rose",price:35,grad:"linear-gradient(160deg,#FF9A6C,#FFC15E)",premium:false},
+  {id:"w13",name:"Galaxy premium ⭐",price:80,grad:"linear-gradient(160deg,#0a0020,#200050,#3a0080)",premium:true},
+  {id:"w14",name:"Aurora boréale ⭐",price:90,grad:"linear-gradient(135deg,#00F5A0,#00D9F5,#7B2FF7)",premium:true},
+  {id:"w15",name:"Or & Magie ⭐",price:100,grad:"linear-gradient(135deg,#FFD700,#FF8C00,#FF4500)",premium:true},
 ];
 
-const IA_OPENERS = ["Aujourd'hui, rappelle-toi que","Pour avancer vers {need}, sache que","Quand tu cherches {need}, souviens-toi que","Ta quête de {need} commence quand"];
-const IA_CORES = [
-  "chaque effort que tu fais compte, même invisible",
-  "tu as déjà surmonté des jours plus durs que celui-ci",
-  "la patience que tu cultives aujourd'hui portera ses fruits demain",
-  "personne d'autre que toi ne peut écrire la suite de ton histoire",
-  "le plus petit progrès vaut mieux qu'une perfection qui n'arrive jamais",
-  "ta force ne se mesure pas à l'absence de doutes, mais à ta capacité à avancer malgré eux"
-];
+/* ═══════════════════════════════════════════════════════════
+   MOTEUR IA — Algorithme de matching multi-dimensionnel
+   ═══════════════════════════════════════════════════════════ */
+function analyzeInput(raw){
+  const input = raw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  const words = input.split(/\s+/).filter(w=>w.length>2);
+  
+  // Détecte les catégories pertinentes et leur score
+  const catScores = {};
+  for(const [cat, keywords] of Object.entries(KW_MAP)){
+    keywords.forEach(kw=>{
+      const kwn = kw.normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+      if(input.includes(kwn)) catScores[cat] = (catScores[cat]||0) + 2;
+      // Correspondance partielle
+      words.forEach(w=>{ if(kwn.includes(w)||w.includes(kwn.slice(0,4))) catScores[cat]=(catScores[cat]||0)+0.6; });
+    });
+  }
+  
+  // Détecte le besoin de mood (boost vs soothe)
+  const boostSignals = ["motivation","courage","réussir","succès","fort","avancer","oser","ambition","rêve"];
+  const sootheSignals = ["calme","stress","anxiété","fatigué","paix","repos","douleur","souffrance","tristesse","malheur"];
+  let boostScore = 0, sootheScore = 0;
+  boostSignals.forEach(s=>{ if(input.includes(s)) boostScore++; });
+  sootheSignals.forEach(s=>{ if(input.includes(s)) sootheScore++; });
+  const preferredMood = boostScore >= sootheScore ? "boost" : "soothe";
+  
+  return {catScores, preferredMood, words};
+}
 
-/* ---------- STORAGE ---------- */
-const DB = {
-  get(key, fallback){ try{ const v = JSON.parse(localStorage.getItem(key)); return v===null||v===undefined ? fallback : v; }catch(e){ return fallback; } },
-  set(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+function findBestQuotes(input, n=3, excludeTexts=[]){
+  if(!input.trim()) {
+    // Si vide → retourne des citations variées aléatoires
+    const shuffled = [...QUOTE_DB].sort(()=>Math.random()-.5);
+    return shuffled.filter(q=>!excludeTexts.includes(q.t)).slice(0,n);
+  }
+  const {catScores, preferredMood, words} = analyzeInput(input);
+  
+  const scored = QUOTE_DB
+    .filter(q=>!excludeTexts.includes(q.t))
+    .map(q=>{
+      let score = 0;
+      // Correspondance de catégorie (facteur principal)
+      score += (catScores[q.c]||0) * 12;
+      // Correspondance de mood
+      if(q.m === preferredMood) score += 8;
+      // Les mots de l'input sont dans les keywords de la citation
+      words.forEach(w=>{
+        if(q.k.some(k=>k.includes(w)||w.includes(k.slice(0,4)))) score += 4;
+        if(q.t.toLowerCase().includes(w)) score += 6;
+      });
+      // Petite dose d'aléatoire pour la variété
+      score += Math.random() * 3;
+      return {...q, score};
+    })
+    .sort((a,b)=>b.score-a.score);
+  
+  return scored.slice(0,n);
+}
+
+function getPersonalizedIntro(q){
+  const intros = INTROS[q.m] || INTROS.boost;
+  return intros[Math.floor(Math.random()*intros.length)];
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ÉTAT GLOBAL & CACHE
+   ═══════════════════════════════════════════════════════════ */
+let currentUser = null;
+let cache = {profile:null, favorites:[], journal:[], ownedWallpapers:[]};
+let homeSelectionCache = [];
+let iaLastResults = [];
+let iaResultIndex = 0;
+let currentCat = null;
+let guestMode = false; // true = mode 100% local, pas de Supabase
+
+// ── localStorage pour le mode invité ──
+const LS = {
+  get(k,d){ try{ const v=JSON.parse(localStorage.getItem('ca_'+k)); return v===null?d:v; }catch(e){ return d; } },
+  set(k,v){ localStorage.setItem('ca_'+k,JSON.stringify(v)); }
 };
-function getUsers(){ return DB.get('citaapp_users', {}); }
-function saveUsers(u){ DB.set('citaapp_users', u); }
-function getCurrentUser(){ return DB.get('citaapp_current_user', null); }
-function setCurrentUser(email){ DB.set('citaapp_current_user', email); }
-function userKey(base){ const u = getCurrentUser(); return `citaapp_${base}_${u||'guest'}`; }
-function getPoints(){ return DB.get(userKey('points'), 0); }
-function setPoints(v){
-  DB.set(userKey('points'), v);
-  document.getElementById('header-points').textContent = v;
-  const sp = document.getElementById('stat-points'); if(sp) sp.textContent = v;
-}
-function addPoints(n){ setPoints(getPoints()+n); }
-function getFavorites(){ return DB.get(userKey('favorites'), []); }
-function setFavorites(f){ DB.set(userKey('favorites'), f); }
-function getJournal(){ return DB.get(userKey('journal'), []); }
-function setJournal(j){ DB.set(userKey('journal'), j); }
-function getOwnedWallpapers(){ return DB.get(userKey('owned'), []); }
-function setOwnedWallpapers(o){ DB.set(userKey('owned'), o); }
-function getActiveWallpaper(){ return DB.get(userKey('active_wp'), null); }
-function setActiveWallpaper(id){ DB.set(userKey('active_wp'), id); }
 
-/* ---------- TOAST ---------- */
-function toast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(window.__toastTimer);
-  window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+/* ═══════════════════════════════════════════════════════════
+   SUPABASE DATA LAYER (cache-first, async background)
+   ═══════════════════════════════════════════════════════════ */
+async function loadUserData(){
+  if(guestMode){
+    cache.profile = {id:'guest',name:'Invité',points:LS.get('pts',20),premium:false,active_wallpaper:LS.get('wp',null)};
+    cache.favorites = LS.get('favs',[]);
+    cache.journal   = LS.get('journal',[]);
+    cache.ownedWallpapers = LS.get('owned',[]);
+    return;
+  }
+  if(!_sb) return;
+  const uid = currentUser.id;
+  const [p,f,j,o] = await Promise.all([
+    _sb.from('profiles').select('*').eq('id',uid).single(),
+    _sb.from('favorites').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
+    _sb.from('journal_entries').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
+    _sb.from('owned_wallpapers').select('wallpaper_id').eq('user_id',uid)
+  ]);
+  cache.profile = p.data || {id:uid,name:currentUser.email.split('@')[0],points:20,premium:false,active_wallpaper:null};
+  cache.favorites = f.data || [];
+  cache.journal = j.data || [];
+  cache.ownedWallpapers = (o.data||[]).map(w=>w.wallpaper_id);
 }
 
-/* =========================================================
-   AUTH
-   ========================================================= */
-function showScreen(id){
-  document.getElementById('screen-login').style.display = id==='login' ? 'flex':'none';
-  document.getElementById('screen-signup').style.display = id==='signup' ? 'flex':'none';
-  document.getElementById('app').style.display = id==='app' ? 'block':'none';
-}
-document.getElementById('link-signup').onclick = (e)=>{ e.preventDefault(); showScreen('signup'); };
-document.getElementById('link-login').onclick = (e)=>{ e.preventDefault(); showScreen('login'); };
-document.getElementById('link-forgot').onclick = (e)=>{ e.preventDefault(); toast('Un email de réinitialisation a été simulé ✉️'); };
-document.getElementById('btn-google-login').onclick = ()=> fakeGoogleAuth();
-document.getElementById('btn-google-signup').onclick = ()=> fakeGoogleAuth();
-document.getElementById('btn-guest-login').onclick = ()=> guestLogin();
+function getPoints(){ return cache.profile?.points||0; }
 
-function guestLogin(){
-  const email = "invite@citaapp.local";
-  const users = getUsers();
-  if(!users[email]) users[email] = {name:"Invité", email, password:"guest"};
-  saveUsers(users);
-  setCurrentUser(email);
-  toast("Connecté en mode invité 🚪");
-  enterApp();
+function addPoints(n){
+  const np = Math.max(0, getPoints()+n);
+  if(cache.profile) cache.profile.points = np;
+  updatePtsUI(np);
+  if(guestMode){ LS.set('pts', np); }
+  else if(_sb && currentUser) _sb.from('profiles').update({points:np}).eq('id',currentUser.id);
 }
-function fakeGoogleAuth(){
-  const email = "demo.google@citaapp.com";
-  const users = getUsers();
-  if(!users[email]) users[email] = {name:"Demo Google", email, password:null};
-  saveUsers(users);
-  setCurrentUser(email);
-  toast('Connecté avec Google ✅');
-  enterApp();
-}
-function showError(boxId, msg){ const box = document.getElementById(boxId); box.textContent = msg; box.style.display = 'block'; }
-function hideError(boxId){ document.getElementById(boxId).style.display='none'; }
 
-document.getElementById('login-form').addEventListener('submit', function(e){
-  e.preventDefault(); hideError('login-error');
-  const email = document.getElementById('login-email').value.trim().toLowerCase();
-  const pw = document.getElementById('login-password').value;
-  const users = getUsers(); const u = users[email];
-  if(!u || u.password !== pw){ showError('login-error', "Email ou mot de passe incorrect."); return; }
-  setCurrentUser(email);
-  toast(`Bon retour, ${u.name.split(' ')[0]} ! 👋`);
-  enterApp();
+function updatePtsUI(v){
+  const el = document.getElementById('pts-display');
+  if(el) el.textContent = v;
+  const sp = document.getElementById('stat-pts');
+  if(sp) sp.textContent = v;
+}
+
+function isFav(text){ return cache.favorites.some(f=>f.quote_text===text); }
+
+async function addFav(q){
+  if(isFav(q.t)){ toast("Déjà dans tes favoris ❤️"); return; }
+  const fav = {id:Date.now().toString(), quote_text:q.t, quote_author:q.a, quote_cat:q.c, created_at:new Date().toISOString()};
+  if(guestMode){
+    cache.favorites.unshift(fav);
+    LS.set('favs', cache.favorites);
+    addPoints(5);
+    toast("Ajouté aux favoris ❤️ +5 points");
+    renderFavorites(); renderProfileStats();
+    return;
+  }
+  if(!_sb) return;
+  const {data,error} = await _sb.from('favorites').insert({user_id:currentUser.id,quote_text:q.t,quote_author:q.a,quote_cat:q.c}).select().single();
+  if(!error && data){
+    cache.favorites.unshift(data);
+    addPoints(5);
+    toast("Ajouté aux favoris ❤️ +5 points");
+    renderFavorites(); renderProfileStats();
+  }
+}
+
+async function removeFav(text){
+  cache.favorites = cache.favorites.filter(f=>f.quote_text!==text);
+  if(guestMode){ LS.set('favs', cache.favorites); }
+  else if(_sb){
+    const fav = cache.favorites.find(f=>f.quote_text===text);
+    if(fav) await _sb.from('favorites').delete().eq('id',fav.id);
+  }
+  toast("Retiré des favoris");
+  renderFavorites(); renderProfileStats();
+}
+
+async function toggleFav(q){
+  if(isFav(q.t)) await removeFav(q.t);
+  else await addFav(q);
+  refreshAllCards();
+}
+
+async function addJournalEntry(e){
+  const entry = {id:Date.now().toString(), positive1:e.p1||null, positive2:e.p2||null, positive3:e.p3||null, challenge:e.ch||null, created_at:new Date().toISOString()};
+  if(guestMode){
+    cache.journal.unshift(entry);
+    LS.set('journal', cache.journal);
+    addPoints(5);
+    toast("Entrée enregistrée 📖 +5 points");
+    renderProfileStats();
+    return;
+  }
+  if(!_sb) return;
+  const {data,error} = await _sb.from('journal_entries').insert({user_id:currentUser.id,positive1:e.p1||null,positive2:e.p2||null,positive3:e.p3||null,challenge:e.ch||null}).select().single();
+  if(!error && data){
+    cache.journal.unshift(data);
+    addPoints(5);
+    toast("Entrée enregistrée 📖 +5 points");
+    renderProfileStats();
+  }
+}
+
+async function buyWallpaper(id,price){
+  if(getPoints()<price){ toast("Pas assez de points 😕"); return; }
+  if(guestMode){
+    cache.ownedWallpapers.push(id);
+    LS.set('owned', cache.ownedWallpapers);
+    addPoints(-price);
+    await applyWallpaper(id);
+    toast("Fond débloqué ! 🎉");
+    renderShop();
+    return;
+  }
+  if(!_sb) return;
+  const {data,error} = await _sb.from('owned_wallpapers').insert({user_id:currentUser.id,wallpaper_id:id}).select().single();
+  if(!error){
+    cache.ownedWallpapers.push(id);
+    addPoints(-price);
+    await applyWallpaper(id);
+    toast("Fond débloqué ! 🎉");
+    renderShop();
+  }
+}
+
+async function applyWallpaper(id){
+  if(cache.profile) cache.profile.active_wallpaper = id;
+  if(guestMode){ LS.set('wp', id); }
+  else if(_sb) _sb.from('profiles').update({active_wallpaper:id}).eq('id',currentUser.id);
+  applyWpToBody(id);
+  renderShop();
+}
+
+function applyWpToBody(id){
+  const w = WALLPAPERS.find(x=>x.id===id);
+  if(w) document.body.style.background = w.grad;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AUTH (Supabase)
+   ═══════════════════════════════════════════════════════════ */
+// Surveille les changements d'état d'auth (Supabase)
+if(_sb){
+  _sb.auth.onAuthStateChange(async(event,session)=>{
+    if(guestMode) return;
+    if(session?.user){
+      currentUser = session.user;
+      await loadUserData();
+      enterApp();
+    } else {
+      // Vérifie si session locale existe
+      const localUser = LocalAuth.getCurrentUser();
+      if(localUser){
+        currentUser = localUser; guestMode = false;
+        await loadUserData(); enterApp();
+      } else {
+        currentUser = null;
+        cache = {profile:null,favorites:[],journal:[],ownedWallpapers:[]};
+        showScreen('login');
+      }
+    }
+  });
+} else {
+  // Pas de Supabase → vérifie session locale ou invité
+  const localUser = LocalAuth.getCurrentUser();
+  if(localUser){
+    currentUser = localUser; guestMode = false;
+    loadUserData().then(()=>enterApp());
+  } else {
+    showScreen('login');
+  }
+}
+
+function showScreen(s){
+  document.getElementById('loading-screen').style.display = 'none';
+  ['login','signup'].forEach(id=>{
+    document.getElementById(`screen-${id}`).style.display = id===s?'flex':'none';
+  });
+  document.getElementById('app').style.display = s==='app'?'block':'none';
+}
+
+// Connexion email
+document.getElementById('login-form').addEventListener('submit',async e=>{
+  e.preventDefault(); clearMsgs('login');
+  const btn=e.target.querySelector('[type=submit]'),orig=btn.textContent;
+  btn.textContent='⏳ Connexion…'; btn.disabled=true;
+  const email=document.getElementById('l-email').value.trim();
+  const pw=document.getElementById('l-pw').value;
+
+  if(_sb){
+    const {error}=await _sb.auth.signInWithPassword({email,password:pw});
+    btn.textContent=orig; btn.disabled=false;
+    if(error){
+      const msg=error.message.includes('Invalid login')?'Email ou mot de passe incorrect.':
+                error.message.includes('Email not confirmed')?'Confirme d\'abord ton email (vérifie ta boîte mail).':error.message;
+      showErr('login',msg);
+    }
+  } else {
+    // Fallback local
+    const r=LocalAuth.signIn(email,pw);
+    btn.textContent=orig; btn.disabled=false;
+    if(r.error){ showErr('login',r.error); return; }
+    currentUser=r.user; guestMode=false;
+    await loadUserData(); enterApp();
+  }
 });
-document.getElementById('signup-form').addEventListener('submit', function(e){
-  e.preventDefault(); hideError('signup-error');
-  const name = document.getElementById('signup-name').value.trim();
-  const email = document.getElementById('signup-email').value.trim().toLowerCase();
-  const pw = document.getElementById('signup-password').value;
-  const pw2 = document.getElementById('signup-password2').value;
-  if(pw.length < 8){ showError('signup-error', "Le mot de passe doit contenir au moins 8 caractères."); return; }
-  if(pw !== pw2){ showError('signup-error', "Les mots de passe ne correspondent pas."); return; }
-  const users = getUsers();
-  if(users[email]){ showError('signup-error', "Un compte existe déjà avec cet email."); return; }
-  users[email] = {name, email, password: pw};
-  saveUsers(users);
-  setCurrentUser(email);
-  setPoints(20);
-  toast('Compte créé, bienvenue ! 🎉 +20 points');
+
+// Inscription email
+document.getElementById('signup-form').addEventListener('submit',async e=>{
+  e.preventDefault(); clearMsgs('signup');
+  const name=document.getElementById('s-name').value.trim();
+  const email=document.getElementById('s-email').value.trim();
+  const pw=document.getElementById('s-pw').value;
+  const pw2=document.getElementById('s-pw2').value;
+  if(!name){ showErr('signup','Entre ton prénom.'); return; }
+  if(pw.length<8){ showErr('signup','Mot de passe : 8 caractères minimum.'); return; }
+  if(pw!==pw2){ showErr('signup','Les mots de passe ne correspondent pas.'); return; }
+  const btn=e.target.querySelector('[type=submit]'),orig=btn.textContent;
+  btn.textContent='⏳ Création…'; btn.disabled=true;
+
+  if(_sb){
+    const {data,error}=await _sb.auth.signUp({email,password:pw,options:{data:{name}}});
+    btn.textContent=orig; btn.disabled=false;
+    if(error){ showErr('signup',error.message.includes('already registered')?'Un compte existe déjà.':error.message); return; }
+    if(data?.user?.identities?.length===0){ showErr('signup','Un compte existe déjà avec cet email.'); return; }
+    if(!data?.session){
+      showOk('signup','✅ Compte créé ! Vérifie ta boîte mail et clique sur le lien de confirmation, puis connecte-toi.');
+    }
+  } else {
+    // Fallback local — fonctionne sans réseau
+    const r=LocalAuth.signUp(email,pw,name);
+    btn.textContent=orig; btn.disabled=false;
+    if(r.error){ showErr('signup',r.error); return; }
+    currentUser=r.user; guestMode=false;
+    await loadUserData();
+    addPoints(20); // bonus bienvenue
+    toast('Bienvenue '+name+' ! 🎉 +20 points');
+    enterApp();
+  }
+});
+
+// Google OAuth — nécessite HTTPS + config dans Supabase Dashboard
+// → Authentication → Providers → Google → activer + configurer l'app Google
+function googleAuthHandler(){
+  if(!_sb){ toast("⚠️ Supabase non disponible"); return; }
+  if(location.protocol === 'file:'){
+    alert("La connexion Google nécessite que l'app soit hébergée (Vercel).\nPour l'instant, utilise Email ou l'accès Invité.");
+    return;
+  }
+  _sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin}});
+}
+document.getElementById('btn-google-login').onclick = googleAuthHandler;
+document.getElementById('btn-google-signup').onclick = googleAuthHandler;
+
+// Invité — 100% localStorage, aucune dépendance réseau
+document.getElementById('btn-guest').onclick = async()=>{
+  guestMode = true;
+  currentUser = {id:'guest', email:'invite@citaapp.local'};
+  await loadUserData(); // charge depuis localStorage
+  toast("Mode invité activé 🚪 (données sauvegardées localement)");
   enterApp();
-});
-document.getElementById('signup-password').addEventListener('input', function(){
-  const v = this.value; let score = 0;
-  if(v.length >= 8) score += 33;
-  if(/[A-Z]/.test(v) && /[0-9]/.test(v)) score += 33;
-  if(/[^A-Za-z0-9]/.test(v)) score += 34;
-  const bar = document.getElementById('pw-bar');
-  bar.style.width = score + '%';
-  bar.style.background = score < 40 ? '#ff5577' : score < 80 ? '#FFD166' : '#2ED573';
-});
-document.getElementById('logout-btn').onclick = function(){
-  DB.set('citaapp_current_user', null);
-  showScreen('login');
-  document.getElementById('login-form').reset();
 };
-function checkSession(){
-  const u = getCurrentUser(); const users = getUsers();
-  if(u && users[u]){ enterApp(); } else { showScreen('login'); }
-}
 
-/* =========================================================
-   APP INIT
-   ========================================================= */
+// Mot de passe oublié
+document.getElementById('link-forgot').onclick=async e=>{
+  e.preventDefault();
+  if(!_sb){ showErr('login',"Supabase non disponible."); return; }
+  const email=document.getElementById('l-email').value.trim();
+  if(!email){ showErr('login',"Entre ton email d'abord."); return; }
+  await _sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin});
+  showOk('login',"Email de réinitialisation envoyé ✉️");
+};
+
+// Navigation entre login et signup
+document.getElementById('link-signup').onclick=e=>{ e.preventDefault(); showScreen('signup'); };
+document.getElementById('link-login').onclick=e=>{ e.preventDefault(); showScreen('login'); };
+
+// Déconnexion
+function doLogout(){
+  guestMode = false; currentUser = null;
+  cache = {profile:null,favorites:[],journal:[],ownedWallpapers:[]};
+  document.body.style.background = '';
+  LocalAuth.signOut();
+  if(_sb) _sb.auth.signOut();
+  else showScreen('login');
+}
+document.getElementById('btn-logout').onclick = doLogout;
+document.getElementById('btn-logout2').onclick = doLogout;
+
+function showErr(s,msg){ const b=document.getElementById(`${s}-err`);b.textContent=msg;b.style.display='block'; }
+function showOk(s,msg){ const b=document.getElementById(`${s}-ok`);b.textContent=msg;b.style.display='block'; }
+function clearMsgs(s){ ['err','ok'].forEach(t=>{ const b=document.getElementById(`${s}-${t}`);if(b){b.style.display='none';b.textContent='';} }); }
+
+// Indicateur force mot de passe
+document.getElementById('s-pw').addEventListener('input',function(){
+  let s=0,v=this.value;
+  if(v.length>=8)s+=33;
+  if(/[A-Z]/.test(v)&&/[0-9]/.test(v))s+=33;
+  if(/[^A-Za-z0-9]/.test(v))s+=34;
+  const b=document.getElementById('pw-bar');
+  b.style.width=s+'%';
+  b.style.background=s<40?'#ff5577':s<80?'#FFD166':'#2ED573';
+});
+
+/* ═══════════════════════════════════════════════════════════
+   ENTRÉE DANS L'APP
+   ═══════════════════════════════════════════════════════════ */
 function enterApp(){
   showScreen('app');
-  const u = getUsers()[getCurrentUser()] || {name:"Invité", email:""};
-  document.getElementById('topbar-name').textContent = u.name;
-  document.getElementById('profile-name').textContent = u.name;
-  document.getElementById('profile-email').textContent = u.email;
-  setPoints(getPoints());
-
-  applyActiveWallpaper();
-  renderToday();
+  const p = cache.profile||{};
+  document.getElementById('uname').textContent = p.name||currentUser?.email?.split('@')[0]||'Utilisateur';
+  document.getElementById('profile-name').textContent = p.name||'Utilisateur';
+  document.getElementById('profile-email').textContent = currentUser?.email||'';
+  updatePtsUI(p.points||0);
+  // Badge premium
+  const pb = document.getElementById('prem-badge');
+  if(pb) pb.style.display = p.premium?'inline-flex':'none';
+  const banner = document.getElementById('prem-banner');
+  if(banner) banner.style.display = p.premium?'none':'block';
+  // Applique le wallpaper actif
+  if(p.active_wallpaper) applyWpToBody(p.active_wallpaper);
+  
   renderHomeQuotes();
+  renderToday();
   renderShop();
   renderJournal();
   renderFavorites();
   renderProfileStats();
-  goToPage('page-home');
+  checkPremiumReturn();
+  goTo('page-home');
 }
 
-/* ---------- NAVIGATION ---------- */
-document.querySelectorAll('[data-goto]').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const target = btn.getAttribute('data-goto');
-    if(target === 'page-list'){ renderQuoteList(btn.getAttribute('data-cat')); }
-    goToPage(target);
-  });
-});
-function goToPage(id){
+/* ═══════════════════════════════════════════════════════════
+   NAVIGATION SPA
+   ═══════════════════════════════════════════════════════════ */
+function goTo(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  document.querySelectorAll('nav.bottombar button').forEach(b=>{
-    const map = {'page-home':'page-home','page-today':'page-today','page-menu':'page-menu','page-list':'page-menu','page-favorites':'page-menu','page-generate':'page-menu','page-shop':'page-shop','page-journal':'page-journal','page-profile':null};
-    b.classList.toggle('active', b.getAttribute('data-goto')===id || (map[id] && b.getAttribute('data-goto')===map[id]));
+  const page = document.getElementById(id);
+  if(page){ page.classList.add('active'); page.scrollTop=0; }
+  document.querySelectorAll('.bnav button').forEach(b=>{
+    const bp = b.getAttribute('data-page');
+    const active = bp===id || (bp==='page-menu' && ['page-list','page-favorites','page-generate'].includes(id));
+    b.classList.toggle('active',active);
   });
-  window.scrollTo({top:0, behavior:'smooth'});
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.bnav button[data-page]').forEach(b=>{
+  b.addEventListener('click',()=>goTo(b.getAttribute('data-page')));
+});
+function openCat(cat){
+  currentCat = cat;
+  const meta = (typeof CAT_META !== 'undefined' && CAT_META[cat])||{icon:'💬',stroke:'var(--accent)'};
+  const names = {
+    motivation:'Motivation', calme:'Calme & Sérénité', confiance:'Confiance en soi',
+    courage:'Courage', succès:'Succès', résilience:'Résilience', bonheur:'Bonheur',
+    persévérance:'Persévérance', gratitude:'Gratitude', rêves:'Rêves & Ambition',
+    travail:'Travail & Discipline', changement:'Changement', présent:"L'instant présent",
+    amour:'Amour & Relations', créativité:'Créativité'
+  };
+  const subs = {
+    motivation:'Boostez votre énergie quotidienne', calme:'Trouvez la paix intérieure',
+    confiance:'Croyez en votre potentiel', courage:'Osez dépasser vos limites',
+    succès:'Atteignez vos objectifs', résilience:'Rebondissez plus fort',
+    bonheur:'Cultivez la joie au quotidien', persévérance:'Continuez coûte que coûte',
+    gratitude:'Appréciez ce que vous avez', rêves:'Visez les étoiles',
+    travail:'Excellence au quotidien', changement:'Évoluez constamment',
+    présent:'Vivez ici et maintenant', amour:'Connectez-vous aux autres',
+    créativité:'Libérez votre imagination'
+  };
+  document.getElementById('list-title').textContent = names[cat]||cat;
+  document.getElementById('list-sub').textContent = subs[cat]||'';
+  const ic = document.getElementById('list-icon');
+  ic.textContent = meta.icon; ic.style.color = meta.stroke||'var(--accent)';
+  renderCatQuotes(cat);
+  goTo('page-list');
 }
 
-/* ---------- QUOTE CARD BUILDER ---------- */
-function quoteCardHTML(q, idx){
-  const favs = getFavorites();
-  const isFav = favs.some(f=>f.text===q.text);
-  return `
-    <div class="quote-card" style="animation-delay:${idx*0.05}s;">
-      <div class="qcard-top">
-        <span class="qmark">"</span>
-        <span class="qavatar" style="background:${q.av||'#ddd'};width:30px;height:30px;border-radius:50%;"></span>
-      </div>
-      <div class="qtext">${q.text}</div>
-      <div class="qfooter">
-        <div class="qauthor">
-          <span class="av" style="background:${q.av||'#ddd'};"></span>
-          <span class="name">${q.author}</span>
-        </div>
-        <div class="qactions">
-          <button class="fav-toggle ${isFav?'fav-on':''}" data-text="${encodeURIComponent(q.text)}">${isFav?'❤️':'🤍'}</button>
-          <button class="share-btn" data-text="${encodeURIComponent(q.text)}">🔗</button>
-        </div>
-      </div>
-    </div>`;
+/* ═══════════════════════════════════════════════════════════
+   ICÔNES ET VAGUES PAR CATÉGORIE
+   ═══════════════════════════════════════════════════════════ */
+const CAT_META = {
+  motivation:   {icon:'⚡', wave:'M0 5 Q4 0 9 5 Q14 10 18 5',   stroke:'#7B2FF7'},
+  calme:        {icon:'🌊', wave:'M0 5 Q3 1 9 5 Q15 9 18 5',    stroke:'#4C5FE0'},
+  confiance:    {icon:'✨', wave:'M2 5 L5 2 L9 5 L13 2 L16 5',  stroke:'#9B6CFF'},
+  courage:      {icon:'🔥', wave:'M0 8 L6 2 L12 6 L18 1',       stroke:'#FF5E2E'},
+  succès:       {icon:'🏆', wave:'M0 8 L9 1 L18 8',              stroke:'#FF8A1E'},
+  résilience:   {icon:'💪', wave:'M0 3 Q5 9 9 5 Q13 1 18 7',    stroke:'#FF4D4D'},
+  bonheur:      {icon:'🌸', wave:'M0 5 Q4 2 9 5 Q14 8 18 5',    stroke:'#F72585'},
+  persévérance: {icon:'🎯', wave:'M0 5 L5 8 L10 2 L15 6 L18 4', stroke:'#FF8A1E'},
+  gratitude:    {icon:'🙏', wave:'M0 4 Q6 9 12 4 Q15 1 18 4',   stroke:'#2ED573'},
+  rêves:        {icon:'⭐', wave:'M0 5 L3 2 L9 5 L15 2 L18 5',  stroke:'#FFD700'},
+  travail:      {icon:'💼', wave:'M0 6 L6 3 L12 6 L18 3',       stroke:'#6B8EFF'},
+  changement:   {icon:'🔄', wave:'M0 7 Q5 1 10 5 Q14 9 18 3',   stroke:'#7EC8E3'},
+  présent:      {icon:'⏳', wave:'M0 3 Q6 9 12 3 Q15 0 18 3',   stroke:'#98D8C8'},
+  amour:        {icon:'❤️', wave:'M0 5 Q4 1 9 5 Q14 9 18 5',    stroke:'#FF6B8A'},
+  créativité:   {icon:'🎨', wave:'M0 4 L4 7 L9 2 L14 6 L18 3',  stroke:'#B05CE6'},
+};
+function waveSVG(cat){
+  const m = CAT_META[cat]||{wave:'M0 5 Q9 1 18 5',stroke:'#aaa'};
+  return `<svg class="q-cat-dot" width="18" height="10" viewBox="0 0 18 10" fill="none"><path d="${m.wave}" stroke="${m.stroke}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 }
-function bindQuoteCardEvents(container, sourceList){
+
+/* ═══════════════════════════════════════════════════════════
+   CONSTRUCTION DES CARDS CITATIONS
+   ═══════════════════════════════════════════════════════════ */
+function buildQCard(q, delay=0){
+  const fav = isFav(q.t);
+  const meta = CAT_META[q.c]||{icon:'💬'};
+  return `<div class="q-card" style="animation-delay:${delay}s;">
+    <div class="q-top">
+      <span class="q-mark">"</span>
+      <span style="font-size:18px;">${meta.icon}</span>
+    </div>
+    <div class="q-text">${q.t}</div>
+    <div class="q-footer">
+      <div class="q-author">
+        ${waveSVG(q.c)}
+        <span class="q-name">${q.a}</span>
+      </div>
+      <div class="q-actions">
+        <button class="fav-toggle ${fav?'fav-on':''}" data-qt="${encodeURIComponent(q.t)}" title="Favori">${fav?'❤️':'🤍'}</button>
+        <button class="share-b" data-qt="${encodeURIComponent(q.t)}" title="Copier">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+function bindCards(container, list){
   container.querySelectorAll('.fav-toggle').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const text = decodeURIComponent(btn.getAttribute('data-text'));
-      const q = sourceList.find(x=>x.text===text);
-      if(q) toggleFavorite(q);
-      refreshAllQuoteViews();
+    btn.addEventListener('click',async()=>{
+      const text = decodeURIComponent(btn.getAttribute('data-qt'));
+      const q = list.find(x=>x.t===text)||QUOTE_DB.find(x=>x.t===text);
+      if(q){ await toggleFav(q); }
     });
   });
-  container.querySelectorAll('.share-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=> toast("Lien de partage copié 🔗 (démo)"));
+  container.querySelectorAll('.share-b').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const text = decodeURIComponent(btn.getAttribute('data-qt'));
+      if(navigator.clipboard && location.protocol !== 'file:'){
+        navigator.clipboard.writeText(text).then(()=>toast("Citation copiée 📋"));
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.cssText='position:fixed;opacity:0;top:0;left:0;';
+        document.body.appendChild(ta); ta.select();
+        try{ document.execCommand('copy'); toast("Citation copiée 📋"); }
+        catch(e){ toast("Sélectionne et copie manuellement"); }
+        document.body.removeChild(ta);
+      }
+    });
   });
 }
-function refreshAllQuoteViews(){
-  renderHomeQuotes(window.__homeQuotes);
+function refreshAllCards(){
+  if(homeSelectionCache.length) renderHomeQuotes(homeSelectionCache);
   renderToday();
   renderFavorites();
-  if(window.__lastListCat) renderQuoteList(window.__lastListCat);
+  if(currentCat) renderCatQuotes(currentCat);
 }
 
-/* ---------- ACCUEIL ---------- */
-function pickRandomQuotes(n){
-  const shuffled = [...QUOTES].sort(()=>Math.random()-0.5);
-  return shuffled.slice(0,n);
+/* ═══════════════════════════════════════════════════════════
+   PAGES RENDER
+   ═══════════════════════════════════════════════════════════ */
+// ACCUEIL
+function renderHomeQuotes(fixed){
+  const list = fixed||[...QUOTE_DB].sort(()=>Math.random()-.5).slice(0,3);
+  homeSelectionCache = list;
+  const wrap=document.getElementById('home-quotes');
+  wrap.innerHTML = list.map((q,i)=>buildQCard(q,i*.07)).join('');
+  bindCards(wrap,list);
 }
-function renderHomeQuotes(fixedList){
-  const list = fixedList || pickRandomQuotes(3);
-  window.__homeQuotes = list;
-  const wrap = document.getElementById('home-quote-list');
-  wrap.innerHTML = list.map((q,i)=>quoteCardHTML(q,i)).join('');
-  bindQuoteCardEvents(wrap, list);
-}
-document.getElementById('btn-new-selection').addEventListener('click', ()=>{
-  renderHomeQuotes(pickRandomQuotes(3));
+document.getElementById('btn-refresh').addEventListener('click',()=>{
+  const list=[...QUOTE_DB].sort(()=>Math.random()-.5).slice(0,3);
+  renderHomeQuotes(list);
   toast("Nouvelle sélection ✨");
 });
 
-/* ---------- DU JOUR ---------- */
-function dayIndex(){
-  const d = new Date();
-  const start = new Date(d.getFullYear(),0,0);
-  const dayOfYear = Math.floor((d-start)/86400000);
-  return dayOfYear % QUOTES.length;
-}
+// DU JOUR
 function renderToday(){
-  const q = QUOTES[dayIndex()];
-  document.getElementById('today-date').textContent = new Date().toLocaleDateString('fr-FR',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  const wrap = document.getElementById('today-card-wrap');
-  wrap.outerHTML = `<div class="quote-card" id="today-card-wrap">${quoteCardHTML(q,0).replace('<div class="quote-card" style="animation-delay:0.00s;">','').replace(/<\/div>\s*$/,'')}`;
-  // simpler: rebuild fully
-  const newWrap = document.getElementById('today-card-wrap');
-  newWrap.innerHTML = `
-    <div class="qcard-top"><span class="qmark">"</span><span class="qavatar" style="background:${q.av};"></span></div>
-    <div class="qtext">${q.text}</div>
-    <div class="qfooter">
-      <div class="qauthor"><span class="av" style="background:${q.av};"></span><span class="name">${q.author}</span></div>
-      <div class="qactions">
-        <button class="fav-toggle" data-text="${encodeURIComponent(q.text)}"></button>
-        <button class="share-btn">🔗</button>
-      </div>
-    </div>`;
-  bindQuoteCardEvents(newWrap, [q]);
-  updateTodayFavBtn(q);
-}
-function updateTodayFavBtn(q){
-  const favs = getFavorites();
-  const isFav = favs.some(f=>f.text===q.text);
-  const btn = document.querySelector('#today-card-wrap .fav-toggle');
-  if(btn){ btn.textContent = isFav ? '❤️' : '🤍'; btn.classList.toggle('fav-on', isFav); }
+  const d=new Date();
+  const doy=Math.floor((d-new Date(d.getFullYear(),0,0))/86400000);
+  const q=QUOTE_DB[doy%QUOTE_DB.length];
+  document.getElementById('today-date-label').textContent=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const wrap=document.getElementById('today-quote');
+  wrap.innerHTML=buildQCard(q,0);
+  bindCards(wrap,[q]);
 }
 
-/* ---------- LISTE FILTRÉE ---------- */
-function renderQuoteList(cat){
-  window.__lastListCat = cat;
-  const data = QUOTES.filter(q=>q.cat===cat);
-  document.getElementById('list-title').textContent = cat === "Motivation" ? "Citations de motivation" : "Citations de bien-être";
-  document.getElementById('list-sub').textContent = cat === "Motivation" ? "Boostez votre énergie quotidienne" : "Trouvez la paix intérieure";
-  document.getElementById('list-icon').textContent = cat === "Motivation" ? "✨" : "🙂";
-  const wrap = document.getElementById('quote-list');
-  wrap.innerHTML = data.map((q,i)=>quoteCardHTML(q,i)).join('');
-  bindQuoteCardEvents(wrap, data);
+// CATÉGORIE
+function renderCatQuotes(cat){
+  const list=QUOTE_DB.filter(q=>q.c===cat);
+  const wrap=document.getElementById('cat-quotes');
+  wrap.innerHTML=list.map((q,i)=>buildQCard(q,i*.05)).join('');
+  bindCards(wrap,list);
 }
 
-/* ---------- FAVORIS ---------- */
-function toggleFavorite(q){
-  let favs = getFavorites();
-  const exists = favs.some(f=>f.text===q.text);
-  if(exists){
-    favs = favs.filter(f=>f.text!==q.text);
-    setFavorites(favs);
-    toast("Retiré des favoris");
-  } else {
-    favs.push(q);
-    setFavorites(favs);
-    addPoints(5);
-    toast("Ajouté aux favoris ❤️ +5 points");
-  }
-  renderProfileStats();
-}
+// FAVORIS
 function renderFavorites(){
-  const list = document.getElementById('favorites-list');
-  const favs = getFavorites();
-  if(favs.length===0){
-    list.innerHTML = `<div class="empty-state"><div class="e-ic">💔</div>Aucun favori pour le moment.<br>Explore les citations pour en ajouter !</div>`;
+  const wrap=document.getElementById('fav-list');
+  if(!cache.favorites.length){
+    wrap.innerHTML=`<div class="empty-state"><div class="ei">💔</div><p>Aucun favori pour le moment.<br>Explore les citations pour en ajouter !</p></div>`;
     return;
   }
-  list.innerHTML = favs.map((q,i)=>quoteCardHTML(q,i)).join('');
-  bindQuoteCardEvents(list, favs);
+  const list=cache.favorites.map(f=>({t:f.quote_text,a:f.quote_author,c:f.quote_cat,av:'#D4C0FF',m:'boost',k:[]}));
+  wrap.innerHTML=list.map((q,i)=>buildQCard(q,i*.05)).join('');
+  bindCards(wrap,list);
 }
 
-/* ---------- IA SIMULÉE ---------- */
-document.getElementById('ia-generate-btn').addEventListener('click', ()=>{
-  const need = document.getElementById('ia-input').value.trim() || "avancer aujourd'hui";
-  const opener = IA_OPENERS[Math.floor(Math.random()*IA_OPENERS.length)].replace('{need}', need);
-  const core = IA_CORES[Math.floor(Math.random()*IA_CORES.length)];
-  const generated = `${opener} ${core}.`;
-  const box = document.getElementById('ia-result');
-  document.getElementById('ia-result-text').textContent = generated;
-  box.style.display = 'block';
-  box.dataset.text = generated;
-});
-document.getElementById('ia-fav-btn').addEventListener('click', ()=>{
-  const text = document.getElementById('ia-result').dataset.text;
-  if(!text) return;
-  toggleFavorite({text, author:"Généré par IA", cat:"IA", av:"#E0D4FF"});
-  renderFavorites();
-});
-
-/* ---------- JOURNAL ---------- */
-document.getElementById('btn-new-entry').addEventListener('click', ()=>{
-  document.getElementById('journal-form').style.display = 'block';
-  document.getElementById('journal-empty').style.display = 'none';
-  document.getElementById('jf-today-label').textContent = "Aujourd'hui";
-});
-document.getElementById('j-cancel-btn').addEventListener('click', ()=>{
-  document.getElementById('journal-form').style.display = 'none';
-  ['jp1','jp2','jp3','jchallenge'].forEach(id=>document.getElementById(id).value='');
-  renderJournal();
-});
-document.getElementById('j-save-btn').addEventListener('click', ()=>{
-  const p1 = document.getElementById('jp1').value.trim();
-  const p2 = document.getElementById('jp2').value.trim();
-  const p3 = document.getElementById('jp3').value.trim();
-  const chal = document.getElementById('jchallenge').value.trim();
-  if(!p1 && !p2 && !p3 && !chal){ toast("Écris au moins une ligne avant d'enregistrer."); return; }
-  const entries = getJournal();
-  entries.unshift({
-    date: new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}),
-    positives:[p1,p2,p3].filter(Boolean),
-    challenge: chal
-  });
-  setJournal(entries);
-  ['jp1','jp2','jp3','jchallenge'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('journal-form').style.display = 'none';
-  addPoints(5);
-  toast("Entrée enregistrée 📖 +5 points");
-  renderJournal();
-  renderProfileStats();
-});
+// JOURNAL
 function renderJournal(){
-  const entries = getJournal();
-  const wrap = document.getElementById('journal-entries');
-  const empty = document.getElementById('journal-empty');
-  if(entries.length===0){
-    empty.style.display = 'block';
-    wrap.innerHTML = '';
-    return;
-  }
-  empty.style.display = 'none';
-  wrap.innerHTML = entries.map(e=>`
-    <div class="journal-entry">
-      <div class="jdate">${e.date}</div>
-      ${e.positives && e.positives.length ? e.positives.map((p,i)=>`<div class="jline"><b>${i+1}.</b> ${escapeHtml(p)}</div>`).join('') : ''}
-      ${e.challenge ? `<div class="jline jchallenge" style="margin-top:6px;"><b>Défi :</b> ${escapeHtml(e.challenge)}</div>` : ''}
-    </div>
-  `).join('');
+  const entries=cache.journal;
+  const empty=document.getElementById('j-empty');
+  const wrap=document.getElementById('j-entries');
+  if(!entries.length){ empty.style.display='block'; wrap.innerHTML=''; return; }
+  empty.style.display='none';
+  wrap.innerHTML=entries.map(e=>`
+    <div class="j-entry">
+      <div class="j-date">${new Date(e.created_at).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}</div>
+      ${[e.positive1,e.positive2,e.positive3].filter(Boolean).map((p,i)=>`<div class="j-line"><b style="color:var(--accent);">${i+1}.</b> ${esc(p)}</div>`).join('')}
+      ${e.challenge?`<div class="j-line" style="margin-top:6px;"><b style="color:var(--blue);">Défi :</b> ${esc(e.challenge)}</div>`:''}
+    </div>`).join('');
 }
-function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-/* ---------- BOUTIQUE ---------- */
+// BOUTIQUE
 function renderShop(){
-  const grid = document.getElementById('shop-grid');
-  const owned = getOwnedWallpapers();
-  const active = getActiveWallpaper();
-  const points = getPoints();
-  grid.innerHTML = WALLPAPERS.map(w=>{
-    const isOwned = owned.includes(w.id);
-    const isActive = active === w.id;
-    let btnHTML;
-    if(isActive){
-      btnHTML = `<button class="shop-btn-active" disabled>✓ Actif</button>`;
-    } else if(isOwned){
-      btnHTML = `<button class="shop-btn-apply" data-id="${w.id}" data-action="apply">Appliquer</button>`;
-    } else if(points < w.price){
-      btnHTML = `<button class="shop-btn-locked" disabled>🔒 Points insuffisants</button>`;
-    } else {
-      btnHTML = `<button class="shop-btn-apply" data-id="${w.id}" data-action="buy">Acheter</button>`;
-    }
-    return `
-      <div class="shop-card">
-        <div class="shop-thumb" style="background:${w.grad}">${isActive?'<span class="shop-badge">✓ Actif</span>':''}</div>
-        <div class="shop-info">
-          <h4>${w.name}</h4>
-          <div class="shop-price">⭐ ${w.price} points</div>
-          ${btnHTML}
+  const grid=document.getElementById('shop-grid');
+  const owned=cache.ownedWallpapers;
+  const active=cache.profile?.active_wallpaper;
+  const pts=getPoints();
+  const isPrem=cache.profile?.premium||false;
+  grid.innerHTML=WALLPAPERS.map(w=>{
+    if(w.premium&&!isPrem){
+      return `<div class="s-card">
+        <div class="s-thumb" style="background:${w.grad};"></div>
+        <div class="s-info">
+          <div class="s-name">${w.name}</div>
+          <div class="s-price">⭐ ${w.price} pts</div>
+          <button class="s-btn locked" onclick="goPremium()">🔒 Premium</button>
         </div>
       </div>`;
+    }
+    const isOwned=owned.includes(w.id);
+    const isActive=active===w.id;
+    let btn;
+    if(isActive) btn=`<button class="s-btn active">✓ Actif</button>`;
+    else if(isOwned) btn=`<button class="s-btn apply" data-wid="${w.id}">Appliquer</button>`;
+    else if(pts<w.price) btn=`<button class="s-btn locked">🔒 ${w.price} pts</button>`;
+    else btn=`<button class="s-btn buy" data-wid="${w.id}" data-price="${w.price}">Acheter</button>`;
+    return `<div class="s-card">
+      <div class="s-thumb" style="background:${w.grad};">${isActive?'<span class="s-active-badge">✓ Actif</span>':''}</div>
+      <div class="s-info">
+        <div class="s-name">${w.name}</div>
+        <div class="s-price">⭐ ${w.price} pts</div>
+        ${btn}
+      </div>
+    </div>`;
   }).join('');
-
-  grid.querySelectorAll('button[data-action]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const id = btn.getAttribute('data-id');
-      const action = btn.getAttribute('data-action');
-      const w = WALLPAPERS.find(x=>x.id===id);
-      if(action==='buy'){
-        const p = getPoints();
-        if(p < w.price){ toast("Pas assez de points 😕"); return; }
-        setPoints(p - w.price);
-        const o = getOwnedWallpapers(); o.push(id); setOwnedWallpapers(o);
-        setActiveWallpaper(id);
-        applyActiveWallpaper();
-        toast(`${w.name} débloqué et appliqué ! 🎉`);
-      } else if(action==='apply'){
-        setActiveWallpaper(id);
-        applyActiveWallpaper();
-        toast(`Fond "${w.name}" appliqué 🎨`);
-      }
-      renderShop();
-      renderProfileStats();
-    });
+  grid.querySelectorAll('[data-wid][class*="buy"]').forEach(btn=>{
+    btn.addEventListener('click',()=>buyWallpaper(btn.getAttribute('data-wid'),parseInt(btn.getAttribute('data-price'))));
+  });
+  grid.querySelectorAll('[data-wid][class*="apply"]').forEach(btn=>{
+    btn.addEventListener('click',()=>applyWallpaper(btn.getAttribute('data-wid')));
   });
 }
-function applyActiveWallpaper(){
-  const id = getActiveWallpaper();
-  const w = WALLPAPERS.find(x=>x.id===id);
-  if(w){ document.body.style.background = w.grad; }
-}
 
-/* ---------- PROFIL / STATS ---------- */
+// PROFIL
 function renderProfileStats(){
-  document.getElementById('stat-points').textContent = getPoints();
-  document.getElementById('stat-favs').textContent = getFavorites().length;
-  document.getElementById('stat-journal').textContent = getJournal().length;
-  const so = document.getElementById('stat-owned'); if(so) so.textContent = getOwnedWallpapers().length;
+  const s1=document.getElementById('stat-pts'),s2=document.getElementById('stat-favs'),s3=document.getElementById('stat-j');
+  if(s1) s1.textContent=getPoints();
+  if(s2) s2.textContent=cache.favorites.length;
+  if(s3) s3.textContent=cache.journal.length;
 }
 
-/* ---------- DEMARRAGE ---------- */
-checkSession();
+/* ═══════════════════════════════════════════════════════════
+   MOTEUR IA — interface
+   ═══════════════════════════════════════════════════════════ */
+function runIA(){
+  const input=document.getElementById('ia-input').value.trim();
+  const think=document.getElementById('ai-thinking');
+  const resultBox=document.getElementById('ia-result');
+  resultBox.style.display='none';
+  think.style.display='flex';
+  
+  setTimeout(()=>{
+    iaLastResults=findBestQuotes(input,5,[]);
+    iaResultIndex=0;
+    think.style.display='none';
+    displayIAResult(iaLastResults[0],input);
+  },900+Math.random()*400);
+}
+
+function displayIAResult(q,input){
+  if(!q) return;
+  const intro=getPersonalizedIntro(q);
+  const cats=Object.entries(analyzeInput(input||'').catScores)
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,2).map(c=>c[0]);
+  const box=document.getElementById('ia-result');
+  document.getElementById('ia-intro').textContent=intro;
+  document.getElementById('ia-text').textContent=`"${q.t}" — ${q.a}`;
+  document.getElementById('ia-match').textContent=cats.length?`🎯 Correspond à : ${cats.join(', ')}`:`🎯 Sélection personnalisée`;
+  box.style.display='block';
+  box.dataset.qt=encodeURIComponent(q.t);
+  // Met à jour le bouton fav
+  const fb=document.getElementById('ia-fav-btn');
+  fb.textContent=isFav(q.t)?'❤️ Dans tes favoris':'🤍 Ajouter aux favoris';
+  fb.classList.toggle('fav-on',isFav(q.t));
+}
+
+document.getElementById('ia-btn').addEventListener('click',runIA);
+document.getElementById('ia-input').addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.ctrlKey) runIA(); });
+
+document.getElementById('ia-fav-btn').addEventListener('click',async()=>{
+  const text=decodeURIComponent(document.getElementById('ia-result').dataset.qt||'');
+  const q=QUOTE_DB.find(x=>x.t===text)||{t:text,a:"Généré par IA",c:"motivation",k:[],m:"boost",av:"#E0D4FF"};
+  await toggleFav(q);
+  const fb=document.getElementById('ia-fav-btn');
+  fb.textContent=isFav(q.t)?'❤️ Dans tes favoris':'🤍 Ajouter aux favoris';
+  fb.classList.toggle('fav-on',isFav(q.t));
+});
+
+document.getElementById('ia-another-btn').addEventListener('click',()=>{
+  iaResultIndex=(iaResultIndex+1)%Math.max(1,iaLastResults.length);
+  const q=iaLastResults[iaResultIndex];
+  if(q) displayIAResult(q,document.getElementById('ia-input').value);
+  else runIA();
+});
+
+/* ═══════════════════════════════════════════════════════════
+   JOURNAL — interface
+   ═══════════════════════════════════════════════════════════ */
+document.getElementById('btn-new-entry').addEventListener('click',()=>{
+  document.getElementById('j-form-wrap').style.display='block';
+  document.getElementById('jf-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('j-empty').style.display='none';
+  document.getElementById('jp1').focus();
+});
+document.getElementById('j-cancel').addEventListener('click',()=>{
+  document.getElementById('j-form-wrap').style.display='none';
+  ['jp1','jp2','jp3','jchall'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  renderJournal();
+});
+document.getElementById('j-save').addEventListener('click',async()=>{
+  const p1=document.getElementById('jp1').value.trim();
+  const p2=document.getElementById('jp2').value.trim();
+  const p3=document.getElementById('jp3').value.trim();
+  const ch=document.getElementById('jchall').value.trim();
+  if(!p1&&!p2&&!p3&&!ch){ toast("Écris au moins une ligne !"); return; }
+  await addJournalEntry({p1,p2,p3,ch});
+  document.getElementById('j-form-wrap').style.display='none';
+  ['jp1','jp2','jp3','jchall'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  renderJournal();
+});
+
+/* ═══════════════════════════════════════════════════════════
+   STRIPE — Premium
+   ═══════════════════════════════════════════════════════════ */
+document.getElementById('btn-premium').addEventListener('click',goPremium);
+function goPremium(){
+  if(STRIPE_PAYMENT_LINK.includes('CONFIGURE')){
+    toast("💡 Configure ton lien Stripe dans le code (variable STRIPE_PAYMENT_LINK)");
+    setTimeout(()=>alert(`Pour activer le Premium :\n\n1. Va sur dashboard.stripe.com\n2. Products → Créer un produit "Premium CitaApp"\n3. Copie l'URL du Payment Link\n4. Colle-le dans STRIPE_PAYMENT_LINK dans index.html\n\nC'est tout ! 🚀`),500);
+    return;
+  }
+  // Redirige vers Stripe avec success URL qui revient sur l'app
+  const successUrl = `${location.origin}${location.pathname}?premium_success=1`;
+  window.location.href = `${STRIPE_PAYMENT_LINK}?success_url=${encodeURIComponent(successUrl)}`;
+}
+async function checkPremiumReturn(){
+  const params=new URLSearchParams(location.search);
+  if(params.get('premium_success')==='1'){
+    history.replaceState({},'',location.pathname);
+    // Active le premium dans Supabase
+    if(currentUser){
+      await _sb.from('profiles').update({premium:true}).eq('id',currentUser.id);
+      if(cache.profile) cache.profile.premium=true;
+      const pb=document.getElementById('prem-badge');
+      if(pb) pb.style.display='inline-flex';
+      const banner=document.getElementById('prem-banner');
+      if(banner) banner.style.display='none';
+      toast("✨ Bienvenue en Premium ! Tous les fonds sont débloqués.");
+      renderShop();
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════════════════════ */
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(window.__tt);
+  window.__tt=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILITAIRES
+   ═══════════════════════════════════════════════════════════ */
+function esc(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/* ═══════════════════════════════════════════════════════════
+   PWA — Service Worker
+   ═══════════════════════════════════════════════════════════ */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+}
 </script>
 </body>
 </html>
