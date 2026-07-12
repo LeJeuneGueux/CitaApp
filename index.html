@@ -9,7 +9,7 @@
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#7B2FF7">
-<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Cita'App">
 
@@ -371,6 +371,7 @@ nav.bnav button.active .nic{filter:drop-shadow(0 0 6px rgba(247,37,133,.5));}
       <div class="ia-wrap">
         <textarea id="ia-input" placeholder="Ex : confiance en moi, stress au travail, manque de motivation, peur de l'échec, relation difficile…"></textarea>
         <button class="btn-blue" id="ia-btn" style="width:100%;justify-content:center;">🪄 Trouver ma citation</button>
+        <p id="ia-counter" style="text-align:center;font-size:12px;margin-top:8px;color:var(--text-muted);"></p>
         <div class="ai-thinking" id="ai-thinking">
           <div class="ai-dots"><span></span><span></span><span></span></div>
           Analyse en cours…
@@ -470,7 +471,7 @@ const SUPA_URL  = 'https://uwhqavadfgkixrpazqql.supabase.co';
 const SUPA_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3aHFhdmFkZmdraXhycGF6cXFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MzUwOTMsImV4cCI6MjA5ODQxMTA5M30.NJtR8ip6v0Arm_ox6vv3UVMGfZw7LxZeYGfAJLYdRm0';
 const STRIPE_PK = 'pk_test_51To5Pw2M45kqOm5MF8qrVi1c7GwDjp0poJvF4dhdqFdVtZ46I7k0i8rB6TcPCtjlgYNnkvgcoVzxPDFTi4DYjv7t00G239fqIL';
 // ↓ À configurer quand tu auras créé le produit dans Stripe Dashboard
-const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/test_dRmdR2cXW4sL8iT8pM9sk00';
+const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/CONFIGURE_TON_LIEN_ICI';
 
 let _sb = null;
 try {
@@ -813,6 +814,8 @@ function addPoints(n){
   updatePtsUI(np);
   if(guestMode){ LS.set('pts', np); }
   else if(_sb && currentUser) _sb.from('profiles').update({points:np}).eq('id',currentUser.id);
+  // Re-render la boutique pour débloquer les fonds devenus accessibles
+  if(typeof renderShop === 'function') renderShop();
 }
 
 function updatePtsUI(v){
@@ -846,12 +849,10 @@ async function addFav(q){
 }
 
 async function removeFav(text){
+  const fav = cache.favorites.find(f=>f.quote_text===text); // ← trouve AVANT de supprimer
   cache.favorites = cache.favorites.filter(f=>f.quote_text!==text);
   if(guestMode){ LS.set('favs', cache.favorites); }
-  else if(_sb){
-    const fav = cache.favorites.find(f=>f.quote_text===text);
-    if(fav) await _sb.from('favorites').delete().eq('id',fav.id);
-  }
+  else if(_sb && fav){ await _sb.from('favorites').delete().eq('id',fav.id); }
   toast("Retiré des favoris");
   renderFavorites(); renderProfileStats();
 }
@@ -945,7 +946,7 @@ if(_sb){
   // Pas de Supabase → vérifie session locale ou invité
   const localUser = LocalAuth.getCurrentUser();
   if(localUser){
-    currentUser = localUser; guestMode = false;
+    currentUser = localUser; guestMode = true; // ← guestMode=true = données en localStorage
     loadUserData().then(()=>enterApp());
   } else {
     showScreen('login');
@@ -977,11 +978,11 @@ document.getElementById('login-form').addEventListener('submit',async e=>{
       showErr('login',msg);
     }
   } else {
-    // Fallback local
+    // Fallback local — stockage localStorage
     const r=LocalAuth.signIn(email,pw);
     btn.textContent=orig; btn.disabled=false;
     if(r.error){ showErr('login',r.error); return; }
-    currentUser=r.user; guestMode=false;
+    currentUser=r.user; guestMode=true; // ← guestMode=true = données en localStorage
     await loadUserData(); enterApp();
   }
 });
@@ -1012,7 +1013,7 @@ document.getElementById('signup-form').addEventListener('submit',async e=>{
     const r=LocalAuth.signUp(email,pw,name);
     btn.textContent=orig; btn.disabled=false;
     if(r.error){ showErr('signup',r.error); return; }
-    currentUser=r.user; guestMode=false;
+    currentUser=r.user; guestMode=true; // ← guestMode=true = données en localStorage
     await loadUserData();
     addPoints(20); // bonus bienvenue
     toast('Bienvenue '+name+' ! 🎉 +20 points');
@@ -1107,7 +1108,8 @@ function enterApp(){
   renderJournal();
   renderFavorites();
   renderProfileStats();
-  checkPremiumReturn();
+  applyPremiumUI(cache.profile?.premium || false);
+  handleStripeReturn();
   goTo('page-home');
 }
 
@@ -1381,22 +1383,27 @@ function displayIAResult(q,input){
   document.getElementById('ia-match').textContent=cats.length?`🎯 Correspond à : ${cats.join(', ')}`:`🎯 Sélection personnalisée`;
   box.style.display='block';
   box.dataset.qt=encodeURIComponent(q.t);
-  // Met à jour le bouton fav
-  const fb=document.getElementById('ia-fav-btn');
-  fb.textContent=isFav(q.t)?'❤️ Dans tes favoris':'🤍 Ajouter aux favoris';
-  fb.classList.toggle('fav-on',isFav(q.t));
+  updateIAFavBtn(isFav(q.t));
 }
 
-document.getElementById('ia-btn').addEventListener('click',runIA);
+document.getElementById('ia-btn').addEventListener('click',()=>{
+  const isPrem = cache.profile?.premium || false;
+  if(!isPrem && getIACountToday() >= IA_FREE_LIMIT){
+    toast("Limite atteinte 😕 Passe en Premium pour l'IA illimitée ✨");
+    goTo('page-shop'); return;
+  }
+  incrementIACount();
+  updateIACounter();
+  runIA();
+});
 document.getElementById('ia-input').addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.ctrlKey) runIA(); });
 
 document.getElementById('ia-fav-btn').addEventListener('click',async()=>{
   const text=decodeURIComponent(document.getElementById('ia-result').dataset.qt||'');
-  const q=QUOTE_DB.find(x=>x.t===text)||{t:text,a:"Généré par IA",c:"motivation",k:[],m:"boost",av:"#E0D4FF"};
+  if(!text) return;
+  const q=QUOTE_DB.find(x=>x.t===text)||{t:text,a:"Généré par IA",c:"motivation",k:[],m:"boost"};
   await toggleFav(q);
-  const fb=document.getElementById('ia-fav-btn');
-  fb.textContent=isFav(q.t)?'❤️ Dans tes favoris':'🤍 Ajouter aux favoris';
-  fb.classList.toggle('fav-on',isFav(q.t));
+  updateIAFavBtn(isFav(text));
 });
 
 document.getElementById('ia-another-btn').addEventListener('click',()=>{
@@ -1435,34 +1442,110 @@ document.getElementById('j-save').addEventListener('click',async()=>{
 /* ═══════════════════════════════════════════════════════════
    STRIPE — Premium
    ═══════════════════════════════════════════════════════════ */
-document.getElementById('btn-premium').addEventListener('click',goPremium);
-function goPremium(){
+const IA_HEART_ON  = `<svg width="20" height="20" viewBox="0 0 24 24" fill="var(--accent2)" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+const IA_HEART_OFF = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+
+function updateIAFavBtn(isFaved){
+  const fb = document.getElementById('ia-fav-btn');
+  if(!fb) return;
+  fb.innerHTML = isFaved ? IA_HEART_ON : IA_HEART_OFF;
+  fb.classList.toggle('faved', isFaved);
+  fb.title = isFaved ? 'Retirer des favoris' : 'Ajouter aux favoris';
+}
+/* ═══════════════════════════════════════════════════════════
+   SYSTÈME PREMIUM COMPLET
+   ═══════════════════════════════════════════════════════════ */
+
+/* checkPremium() — lit le statut Supabase/cache et met à jour l'UI */
+async function checkPremium(){
+  let isPrem = false;
+  if(_sb && currentUser && !guestMode){
+    const {data} = await _sb.from('profiles').select('premium').eq('id',currentUser.id).single();
+    isPrem = data?.premium || false;
+    if(cache.profile) cache.profile.premium = isPrem;
+  } else {
+    isPrem = cache.profile?.premium || LS.get('premium', false);
+  }
+  applyPremiumUI(isPrem);
+  return isPrem;
+}
+
+/* applyPremiumUI() — met à jour tous les éléments de l'interface */
+function applyPremiumUI(isPrem){
+  const badge = document.getElementById('prem-badge');
+  if(badge) badge.style.display = isPrem ? 'inline-flex' : 'none';
+  const banner = document.getElementById('prem-banner');
+  if(banner) banner.style.display = isPrem ? 'none' : 'block';
+  renderShop();
+  updateIACounter();
+}
+
+/* upgradeToPremium() — redirige vers Stripe Checkout */
+function upgradeToPremium(){
   if(STRIPE_PAYMENT_LINK.includes('CONFIGURE')){
-    toast("💡 Configure ton lien Stripe dans le code (variable STRIPE_PAYMENT_LINK)");
-    setTimeout(()=>alert(`Pour activer le Premium :\n\n1. Va sur dashboard.stripe.com\n2. Products → Créer un produit "Premium CitaApp"\n3. Copie l'URL du Payment Link\n4. Colle-le dans STRIPE_PAYMENT_LINK dans index.html\n\nC'est tout ! 🚀`),500);
+    toast("💡 Configure STRIPE_PAYMENT_LINK dans le code");
+    setTimeout(()=>alert(
+      "Étapes Stripe :\n\n" +
+      "1. dashboard.stripe.com → Products → + Add product\n" +
+      "2. Nom : Premium CitaApp · Prix : ex. 4,99€/mois (récurrent)\n" +
+      "3. Payment Links → Create link\n" +
+      "4. Dans le Dashboard Stripe, configure la 'Success URL' :\n" +
+      "   " + location.origin + "/?premium_success=1\n" +
+      "5. Copie le lien (https://buy.stripe.com/xxx)\n" +
+      "6. Colle-le dans STRIPE_PAYMENT_LINK dans index.html"
+    ), 400);
     return;
   }
-  // Redirige vers Stripe avec success URL qui revient sur l'app
-  const successUrl = `${location.origin}${location.pathname}?premium_success=1`;
-  window.location.href = `${STRIPE_PAYMENT_LINK}?success_url=${encodeURIComponent(successUrl)}`;
+  window.location.href = STRIPE_PAYMENT_LINK;
 }
-async function checkPremiumReturn(){
-  const params=new URLSearchParams(location.search);
-  if(params.get('premium_success')==='1'){
-    history.replaceState({},'',location.pathname);
-    // Active le premium dans Supabase
-    if(currentUser){
-      await _sb.from('profiles').update({premium:true}).eq('id',currentUser.id);
-      if(cache.profile) cache.profile.premium=true;
-      const pb=document.getElementById('prem-badge');
-      if(pb) pb.style.display='inline-flex';
-      const banner=document.getElementById('prem-banner');
-      if(banner) banner.style.display='none';
-      toast("✨ Bienvenue en Premium ! Tous les fonds sont débloqués.");
-      renderShop();
-    }
+function goPremium(){ upgradeToPremium(); } // alias
+
+/* handleStripeReturn() — détecte le retour de Stripe et active le Premium */
+async function handleStripeReturn(){
+  const params = new URLSearchParams(location.search);
+  if(params.get('premium_success') !== '1') return;
+  history.replaceState({}, '', location.pathname);
+  if(!currentUser){ toast("Connecte-toi pour activer le Premium."); return; }
+  if(cache.profile) cache.profile.premium = true;
+  if(_sb && !guestMode){
+    await _sb.from('profiles').update({premium:true}).eq('id',currentUser.id);
+  } else {
+    LS.set('premium', true);
+  }
+  applyPremiumUI(true);
+  toast("✨ Bienvenue en Premium ! Tout est débloqué.");
+}
+function checkPremiumReturn(){ handleStripeReturn(); } // alias
+
+/* Compteur IA (non-premium = 10/jour, premium = illimité) */
+const IA_FREE_LIMIT = 10;
+function getIACountToday(){
+  const today = new Date().toDateString();
+  const s = JSON.parse(localStorage.getItem('ca_ia_count')||'{}');
+  return s.date === today ? (s.count||0) : 0;
+}
+function incrementIACount(){
+  const today = new Date().toDateString();
+  const s = JSON.parse(localStorage.getItem('ca_ia_count')||'{}');
+  const count = s.date === today ? (s.count||0)+1 : 1;
+  localStorage.setItem('ca_ia_count', JSON.stringify({date:today, count}));
+  return count;
+}
+function updateIACounter(){
+  const isPrem = cache.profile?.premium || false;
+  const el = document.getElementById('ia-counter');
+  if(!el) return;
+  if(isPrem){
+    el.textContent = '✨ Premium · IA illimitée';
+    el.style.color = '#FFD700';
+  } else {
+    const left = Math.max(0, IA_FREE_LIMIT - getIACountToday());
+    el.textContent = left + '/' + IA_FREE_LIMIT + ' générations aujourd\'hui';
+    el.style.color = left <= 2 ? 'var(--accent2)' : 'var(--text-muted)';
   }
 }
+
+document.getElementById('btn-premium').addEventListener('click', upgradeToPremium);
 
 /* ═══════════════════════════════════════════════════════════
    TOAST
