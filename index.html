@@ -785,76 +785,70 @@ const LS = {
    SUPABASE DATA LAYER (cache-first, async background)
    ═══════════════════════════════════════════════════════════ */
 async function loadUserData(){
-  if(guestMode){
-    cache.profile = {id:'guest',name:'Invité',points:LS.get('pts',20),premium:false,active_wallpaper:LS.get('wp',null)};
-    cache.favorites = LS.get('favs',[]);
-    cache.journal   = LS.get('journal',[]);
-    cache.ownedWallpapers = LS.get('owned',[]);
-    return;
+  const uid = currentUser?.id || 'guest';
+  const name = currentUser?.user_metadata?.name || currentUser?.email?.split('@')[0] || 'Utilisateur';
+  // TOUJOURS charger depuis localStorage en premier (instantané, fiable)
+  cache.profile = LS.get('p_'+uid, {id:uid,name:name,points:20,premium:false,active_wallpaper:null});
+  cache.favorites = LS.get('f_'+uid, []);
+  cache.journal   = LS.get('j_'+uid, []);
+  cache.ownedWallpapers = LS.get('o_'+uid, []);
+  // Si Supabase dispo, sync en arrière-plan
+  if(_sb && currentUser && !guestMode){
+    try{
+      const [p,f,j,o] = await Promise.all([
+        _sb.from('profiles').select('*').eq('id',uid).single(),
+        _sb.from('favorites').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
+        _sb.from('journal_entries').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
+        _sb.from('owned_wallpapers').select('wallpaper_id').eq('user_id',uid)
+      ]);
+      if(p.data){ cache.profile=p.data; LS.set('p_'+uid,p.data); }
+      if(f.data?.length){ cache.favorites=f.data; LS.set('f_'+uid,f.data); }
+      if(j.data?.length){ cache.journal=j.data; LS.set('j_'+uid,j.data); }
+      if(o.data){ cache.ownedWallpapers=o.data.map(w=>w.wallpaper_id); LS.set('o_'+uid,cache.ownedWallpapers); }
+    }catch(e){ console.warn('Supabase sync skipped:',e.message); }
   }
-  if(!_sb) return;
-  const uid = currentUser.id;
-  const [p,f,j,o] = await Promise.all([
-    _sb.from('profiles').select('*').eq('id',uid).single(),
-    _sb.from('favorites').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
-    _sb.from('journal_entries').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
-    _sb.from('owned_wallpapers').select('wallpaper_id').eq('user_id',uid)
-  ]);
-  cache.profile = p.data || {id:uid,name:currentUser.email.split('@')[0],points:20,premium:false,active_wallpaper:null};
-  cache.favorites = f.data || [];
-  cache.journal = j.data || [];
-  cache.ownedWallpapers = (o.data||[]).map(w=>w.wallpaper_id);
 }
 
 function getPoints(){ return cache.profile?.points||0; }
 
 function addPoints(n){
+  const uid = currentUser?.id||'guest';
   const np = Math.max(0, getPoints()+n);
-  if(cache.profile) cache.profile.points = np;
+  if(cache.profile) cache.profile.points=np;
+  LS.set('p_'+uid, cache.profile); // TOUJOURS sauver en local
   updatePtsUI(np);
-  if(guestMode){ LS.set('pts', np); }
-  else if(_sb && currentUser) _sb.from('profiles').update({points:np}).eq('id',currentUser.id);
-  // Re-render la boutique pour débloquer les fonds devenus accessibles
-  if(typeof renderShop === 'function') renderShop();
-}
-
-function updatePtsUI(v){
-  const el = document.getElementById('pts-display');
-  if(el) el.textContent = v;
-  const sp = document.getElementById('stat-pts');
-  if(sp) sp.textContent = v;
+  if(_sb && currentUser && !guestMode) _sb.from('profiles').update({points:np}).eq('id',uid);
+  if(typeof renderShop==='function') renderShop();
 }
 
 function isFav(text){ return cache.favorites.some(f=>f.quote_text===text); }
 
 async function addFav(q){
   if(isFav(q.t)){ toast("Déjà dans tes favoris ❤️"); return; }
-  const fav = {id:Date.now().toString(), quote_text:q.t, quote_author:q.a, quote_cat:q.c, created_at:new Date().toISOString()};
-  if(guestMode){
-    cache.favorites.unshift(fav);
-    LS.set('favs', cache.favorites);
-    addPoints(5);
-    toast("Ajouté aux favoris ❤️ +5 points");
-    renderFavorites(); renderProfileStats();
-    return;
-  }
-  if(!_sb) return;
-  const {data,error} = await _sb.from('favorites').insert({user_id:currentUser.id,quote_text:q.t,quote_author:q.a,quote_cat:q.c}).select().single();
-  if(!error && data){
-    cache.favorites.unshift(data);
-    addPoints(5);
-    toast("Ajouté aux favoris ❤️ +5 points");
-    renderFavorites(); renderProfileStats();
+  const uid = currentUser?.id||'guest';
+  const fav = {id:Date.now().toString(),quote_text:q.t,quote_author:q.a||'',quote_cat:q.c||'',created_at:new Date().toISOString()};
+  // 1. Local immédiat
+  cache.favorites.unshift(fav);
+  LS.set('f_'+uid, cache.favorites);
+  addPoints(5);
+  toast("Ajouté aux favoris ❤️ +5 points");
+  renderFavorites(); renderProfileStats();
+  // 2. Sync Supabase en fond
+  if(_sb && currentUser && !guestMode){
+    _sb.from('favorites').insert({user_id:uid,quote_text:q.t,quote_author:q.a||'',quote_cat:q.c||''})
+      .then(({error})=>{ if(error) console.warn('Supabase fav:',error.message); });
   }
 }
 
 async function removeFav(text){
-  const fav = cache.favorites.find(f=>f.quote_text===text); // ← trouve AVANT de supprimer
+  const uid = currentUser?.id||'guest';
+  const fav = cache.favorites.find(f=>f.quote_text===text);
   cache.favorites = cache.favorites.filter(f=>f.quote_text!==text);
-  if(guestMode){ LS.set('favs', cache.favorites); }
-  else if(_sb && fav){ await _sb.from('favorites').delete().eq('id',fav.id); }
+  LS.set('f_'+uid, cache.favorites);
   toast("Retiré des favoris");
   renderFavorites(); renderProfileStats();
+  if(_sb && currentUser && !guestMode && fav)
+    _sb.from('favorites').delete().eq('id',fav.id);
 }
 
 async function toggleFav(q){
@@ -864,55 +858,40 @@ async function toggleFav(q){
 }
 
 async function addJournalEntry(e){
-  const entry = {id:Date.now().toString(), positive1:e.p1||null, positive2:e.p2||null, positive3:e.p3||null, challenge:e.ch||null, created_at:new Date().toISOString()};
-  if(guestMode){
-    cache.journal.unshift(entry);
-    LS.set('journal', cache.journal);
-    addPoints(5);
-    toast("Entrée enregistrée 📖 +5 points");
-    renderProfileStats();
-    return;
-  }
-  if(!_sb) return;
-  const {data,error} = await _sb.from('journal_entries').insert({user_id:currentUser.id,positive1:e.p1||null,positive2:e.p2||null,positive3:e.p3||null,challenge:e.ch||null}).select().single();
-  if(!error && data){
-    cache.journal.unshift(data);
-    addPoints(5);
-    toast("Entrée enregistrée 📖 +5 points");
-    renderProfileStats();
-  }
+  const uid = currentUser?.id||'guest';
+  const entry = {id:Date.now().toString(),positive1:e.p1||null,positive2:e.p2||null,positive3:e.p3||null,challenge:e.ch||null,created_at:new Date().toISOString()};
+  cache.journal.unshift(entry);
+  LS.set('j_'+uid, cache.journal);
+  addPoints(5);
+  toast("Entrée enregistrée 📖 +5 points");
+  renderProfileStats(); renderJournal();
+  if(_sb && currentUser && !guestMode)
+    _sb.from('journal_entries').insert({user_id:uid,positive1:e.p1||null,positive2:e.p2||null,positive3:e.p3||null,challenge:e.ch||null});
 }
 
 async function buyWallpaper(id,price){
   if(getPoints()<price){ toast("Pas assez de points 😕"); return; }
-  if(guestMode){
-    cache.ownedWallpapers.push(id);
-    LS.set('owned', cache.ownedWallpapers);
-    addPoints(-price);
-    await applyWallpaper(id);
-    toast("Fond débloqué ! 🎉");
-    renderShop();
-    return;
-  }
-  if(!_sb) return;
-  const {data,error} = await _sb.from('owned_wallpapers').insert({user_id:currentUser.id,wallpaper_id:id}).select().single();
-  if(!error){
-    cache.ownedWallpapers.push(id);
-    addPoints(-price);
-    await applyWallpaper(id);
-    toast("Fond débloqué ! 🎉");
-    renderShop();
-  }
+  if(cache.ownedWallpapers.includes(id)){ await applyWallpaper(id); return; }
+  const uid = currentUser?.id||'guest';
+  cache.ownedWallpapers.push(id);
+  LS.set('o_'+uid, cache.ownedWallpapers);
+  addPoints(-price);
+  await applyWallpaper(id);
+  toast("Fond débloqué ! 🎉");
+  if(_sb && currentUser && !guestMode)
+    _sb.from('owned_wallpapers').insert({user_id:uid,wallpaper_id:id})
+      .then(({error})=>{ if(error) console.warn('Supabase wp:',error.message); });
 }
 
 async function applyWallpaper(id){
-  if(cache.profile) cache.profile.active_wallpaper = id;
-  if(guestMode){ LS.set('wp', id); }
-  else if(_sb) _sb.from('profiles').update({active_wallpaper:id}).eq('id',currentUser.id);
+  const uid = currentUser?.id||'guest';
+  if(cache.profile) cache.profile.active_wallpaper=id;
+  LS.set('p_'+uid, cache.profile);
   applyWpToBody(id);
   renderShop();
+  if(_sb && currentUser && !guestMode)
+    _sb.from('profiles').update({active_wallpaper:id}).eq('id',uid);
 }
-
 function applyWpToBody(id){
   const w = WALLPAPERS.find(x=>x.id===id);
   if(w) document.body.style.background = w.grad;
