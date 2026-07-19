@@ -396,7 +396,27 @@ nav.bnav button.active .nic{filter:drop-shadow(0 0 6px rgba(247,37,133,.5));}
     <section class="page" id="page-shop">
       <div class="page-icon" style="background:rgba(255,138,30,.12);box-shadow:0 0 28px rgba(255,138,30,.3);color:var(--orange);">🛍️</div>
       <h1 class="page-title" style="color:var(--orange);">Boutique</h1>
-      <p class="page-sub">Échangez vos points contre des fonds d'écran magnifiques</p>
+      <p class="page-sub">Échangez vos stars contre des fonds · Tout debloquer avec Premium</p>
+      <div style="background:#1C1F3B;border-radius:16px;padding:16px;margin-bottom:20px;border:1px solid rgba(255,209,102,.25);">
+        <div style="font-size:13px;font-weight:800;color:#FFD166;margin-bottom:10px;">Acheter des stars</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+          <div style="background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.2);border-radius:10px;padding:10px;text-align:center;">
+            <div style="font-size:18px;font-weight:800;color:#FFD166;">100</div>
+            <div style="font-size:10px;color:var(--text-muted);margin:3px 0 7px;">stars</div>
+            <button class="s-btn buy" onclick="buyStars('pack_100')">0,99 EUR</button>
+          </div>
+          <div style="background:rgba(123,47,247,.12);border:1px solid rgba(123,47,247,.3);border-radius:10px;padding:10px;text-align:center;">
+            <div style="font-size:18px;font-weight:800;color:#B06FFF;">350</div>
+            <div style="font-size:10px;color:var(--text-muted);margin:3px 0 7px;">stars</div>
+            <button class="s-btn buy" onclick="buyStars('pack_350')">2,49 EUR</button>
+          </div>
+          <div style="background:rgba(247,37,133,.1);border:1px solid rgba(247,37,133,.25);border-radius:10px;padding:10px;text-align:center;">
+            <div style="font-size:18px;font-weight:800;color:#F72585;">1000</div>
+            <div style="font-size:10px;color:var(--text-muted);margin:3px 0 7px;">stars</div>
+            <button class="s-btn buy" onclick="buyStars('pack_1000')">4,99 EUR</button>
+          </div>
+        </div>
+      </div>
 
       <div class="premium-banner" id="prem-banner">
         <h2>✨ Passer en Premium</h2>
@@ -683,21 +703,25 @@ const INTROS = {
 
 /* ── WALLPAPERS ─────────────────────────────────────────────── */
 const WALLPAPERS = [
-  {id:"w1",name:"Minuit profond",price:45,grad:"linear-gradient(160deg,#0b0f25,#1a2040)",premium:false},
-  {id:"w2",name:"Coucher mauve",price:35,grad:"linear-gradient(160deg,#b06be0,#7B2FF7)",premium:false},
-  {id:"w3",name:"Nuit étoilée",price:40,grad:"linear-gradient(160deg,#06203f,#0b3d75)",premium:false},
-  {id:"w4",name:"Feu et glace",price:45,grad:"linear-gradient(160deg,#FF5E2E,#FF8A1E)",premium:false},
-  {id:"w5",name:"Candy pop",price:30,grad:"linear-gradient(160deg,#FFB23E,#FFD93E)",premium:false},
-  {id:"w6",name:"Océan turquoise",price:35,grad:"linear-gradient(160deg,#0E7C82,#13A39A)",premium:false},
-  {id:"w7",name:"Rêve violet",price:40,grad:"linear-gradient(160deg,#7A2D55,#5B1E70)",premium:false},
-  {id:"w8",name:"Flamme dorée",price:55,grad:"linear-gradient(160deg,#E8A93C,#F4C95D)",premium:false},
-  {id:"w9",name:"Arc-en-ciel pastel",price:40,grad:"linear-gradient(135deg,#FFD3DA,#D4F0FF,#FFF3C4)",premium:false},
-  {id:"w10",name:"Montagne mystique",price:50,grad:"linear-gradient(160deg,#16324a,#1c4d63)",premium:false},
-  {id:"w11",name:"Paradis tropical",price:35,grad:"linear-gradient(160deg,#5FCB6E,#8FE08A)",premium:false},
-  {id:"w12",name:"Coucher rose",price:35,grad:"linear-gradient(160deg,#FF9A6C,#FFC15E)",premium:false},
-  {id:"w13",name:"Galaxy premium ⭐",price:80,grad:"linear-gradient(160deg,#0a0020,#200050,#3a0080)",premium:true},
-  {id:"w14",name:"Aurora boréale ⭐",price:90,grad:"linear-gradient(135deg,#00F5A0,#00D9F5,#7B2FF7)",premium:true},
-  {id:"w15",name:"Or & Magie ⭐",price:100,grad:"linear-gradient(135deg,#FFD700,#FF8C00,#FF4500)",premium:true},
+  // GRATUITS
+  {id:"wf1",name:"Nuit profonde",    price:0,  tier:"free",    grad:"linear-gradient(160deg,#0b0f25,#1a2040)"},
+  {id:"wf2",name:"Gris ardoise",     price:0,  tier:"free",    grad:"linear-gradient(160deg,#1a1a2e,#2d2d44)"},
+  {id:"wf3",name:"Encre bleue",      price:0,  tier:"free",    grad:"linear-gradient(160deg,#06203f,#0b3d75)"},
+  // ETOILES
+  {id:"ws1",name:"Coucher mauve",    price:40, tier:"stars",   grad:"linear-gradient(160deg,#b06be0,#7B2FF7)"},
+  {id:"ws2",name:"Feu et glace",     price:45, tier:"stars",   grad:"linear-gradient(160deg,#FF5E2E,#FF8A1E)"},
+  {id:"ws3",name:"Candy pop",        price:30, tier:"stars",   grad:"linear-gradient(160deg,#FFB23E,#FFD93E)"},
+  {id:"ws4",name:"Ocean turquoise",  price:35, tier:"stars",   grad:"linear-gradient(160deg,#0E7C82,#13A39A)"},
+  {id:"ws5",name:"Flamme doree",     price:55, tier:"stars",   grad:"linear-gradient(160deg,#E8A93C,#F4C95D)"},
+  {id:"ws6",name:"Coucher rose",     price:35, tier:"stars",   grad:"linear-gradient(160deg,#FF9A6C,#FFC15E)"},
+  {id:"ws7",name:"Paradis tropical", price:35, tier:"stars",   grad:"linear-gradient(160deg,#5FCB6E,#8FE08A)"},
+  {id:"ws8",name:"Pastel arc-en-ciel",price:50,tier:"stars",   grad:"linear-gradient(135deg,#FFD3DA,#D4F0FF,#FFF3C4)"},
+  // PREMIUM SEULEMENT
+  {id:"wp1",name:"Galaxy Premium",   price:0,  tier:"premium", grad:"linear-gradient(160deg,#0a0020,#200050,#3a0080)"},
+  {id:"wp2",name:"Aurora Boreale",   price:0,  tier:"premium", grad:"linear-gradient(135deg,#00F5A0,#00D9F5,#7B2FF7)"},
+  {id:"wp3",name:"Or et Magie",      price:0,  tier:"premium", grad:"linear-gradient(135deg,#FFD700,#FF8C00,#FF4500)"},
+  {id:"wp4",name:"Reve Cristal",     price:0,  tier:"premium", grad:"linear-gradient(135deg,#A8EDEA,#FED6E3,#C3B1E1)"},
+  {id:"wp5",name:"Nuit Stellaire",   price:0,  tier:"premium", grad:"linear-gradient(160deg,#000428,#004e92,#7B2FF7)"},
 ];
 
 /* ═══════════════════════════════════════════════════════════
@@ -789,7 +813,7 @@ async function loadUserData(){
   const name = currentUser?.user_metadata?.name || currentUser?.email?.split('@')[0] || 'Utilisateur';
   // TOUJOURS charger depuis localStorage en premier (instantané, fiable)
   cache.profile = LS.get('p_'+uid, {id:uid,name:name,points:20,premium:false,active_wallpaper:null});
-  cache.favorites = LS.get('f_'+uid, []);
+  cache.favorites = (()=>{ try{ const v=JSON.parse(localStorage.getItem('ca_f_'+uid)); return Array.isArray(v)?v:[]; }catch(e){ return []; } })();
   cache.journal   = LS.get('j_'+uid, []);
   cache.ownedWallpapers = LS.get('o_'+uid, []);
   // Si Supabase dispo, sync en arrière-plan
@@ -818,25 +842,37 @@ function addPoints(n){
   LS.set('p_'+uid, cache.profile); // TOUJOURS sauver en local
   updatePtsUI(np);
   if(_sb && currentUser && !guestMode) _sb.from('profiles').update({points:np}).eq('id',uid);
-  if(typeof renderShop==='function') renderShop();
+  if(typeof renderShop==='function') try{ renderShop(); }catch(e){ console.warn('renderShop:',e.message); }
 }
 
 function isFav(text){ return cache.favorites.some(f=>f.quote_text===text); }
 
 async function addFav(q){
   if(isFav(q.t)){ toast("Déjà dans tes favoris ❤️"); return; }
-  const uid = currentUser?.id||'guest';
-  const fav = {id:Date.now().toString(),quote_text:q.t,quote_author:q.a||'',quote_cat:q.c||'',created_at:new Date().toISOString()};
-  // 1. Local immédiat
-  cache.favorites.unshift(fav);
-  LS.set('f_'+uid, cache.favorites);
-  addPoints(5);
-  toast("Ajouté aux favoris ❤️ +5 points");
-  renderFavorites(); renderProfileStats();
-  // 2. Sync Supabase en fond
-  if(_sb && currentUser && !guestMode){
-    _sb.from('favorites').insert({user_id:uid,quote_text:q.t,quote_author:q.a||'',quote_cat:q.c||''})
-      .then(({error})=>{ if(error) console.warn('Supabase fav:',error.message); });
+  const isPremF=cache.profile?.premium||false;
+  if(!isPremF && cache.favorites.length>=FREE.favorites){
+    toast("Limite : "+FREE.favorites+" favoris max en gratuit. Passe en Premium ✨");
+    return;
+  }
+  try {
+    const uid = currentUser?.id||'guest';
+    const fav = {id:Date.now().toString(),quote_text:q.t,quote_author:q.a||'',quote_cat:q.c||'',created_at:new Date().toISOString()};
+    // 1. Sauvegarde locale IMMÉDIATE (toujours, peu importe Supabase)
+    cache.favorites.unshift(fav);
+    try{ localStorage.setItem('ca_f_'+uid, JSON.stringify(cache.favorites)); }catch(e){}
+    // 2. Toast et rendu (sécurisé)
+    toast("Ajouté aux favoris ❤️ +5 points");
+    try{ addPoints(5); }catch(e){}
+    try{ renderFavorites(); }catch(e){}
+    try{ renderProfileStats(); }catch(e){}
+    // 3. Sync Supabase en fond (optionnel)
+    if(_sb && currentUser && !guestMode){
+      _sb.from('favorites').insert({user_id:uid,quote_text:q.t,quote_author:q.a||'',quote_cat:q.c||''})
+        .then(({error})=>{ if(error) console.warn('Supabase fav:',error.message); });
+    }
+  } catch(e) {
+    console.error('addFav error:',e);
+    toast("Erreur ❌ " + e.message);
   }
 }
 
@@ -858,6 +894,11 @@ async function toggleFav(q){
 }
 
 async function addJournalEntry(e){
+  const isPremJ=cache.profile?.premium||false;
+  if(!isPremJ && cache.journal.length>=FREE.journal){
+    toast("Limite : "+FREE.journal+" entrées max en gratuit. Passe en Premium ✨");
+    return;
+  }
   const uid = currentUser?.id||'guest';
   const entry = {id:Date.now().toString(),positive1:e.p1||null,positive2:e.p2||null,positive3:e.p3||null,challenge:e.ch||null,created_at:new Date().toISOString()};
   cache.journal.unshift(entry);
@@ -1285,43 +1326,42 @@ function renderJournal(){
 // BOUTIQUE
 function renderShop(){
   const grid=document.getElementById('shop-grid');
-  const owned=cache.ownedWallpapers;
+  if(!grid) return;
+  const owned=cache.ownedWallpapers||[];
   const active=cache.profile?.active_wallpaper;
   const pts=getPoints();
   const isPrem=cache.profile?.premium||false;
-  grid.innerHTML=WALLPAPERS.map(w=>{
-    if(w.premium&&!isPrem){
-      return `<div class="s-card">
-        <div class="s-thumb" style="background:${w.grad};"></div>
-        <div class="s-info">
-          <div class="s-name">${w.name}</div>
-          <div class="s-price">⭐ ${w.price} pts</div>
-          <button class="s-btn locked" onclick="goPremium()">🔒 Premium</button>
-        </div>
-      </div>`;
-    }
+  function wpCard(w){
     const isOwned=owned.includes(w.id);
     const isActive=active===w.id;
-    let btn;
-    if(isActive) btn=`<button class="s-btn active">✓ Actif</button>`;
-    else if(isOwned) btn=`<button class="s-btn apply" data-wid="${w.id}">Appliquer</button>`;
-    else if(pts<w.price) btn=`<button class="s-btn locked">🔒 ${w.price} pts</button>`;
-    else btn=`<button class="s-btn buy" data-wid="${w.id}" data-price="${w.price}">Acheter</button>`;
-    return `<div class="s-card">
-      <div class="s-thumb" style="background:${w.grad};">${isActive?'<span class="s-active-badge">✓ Actif</span>':''}</div>
-      <div class="s-info">
-        <div class="s-name">${w.name}</div>
-        <div class="s-price">⭐ ${w.price} pts</div>
-        ${btn}
-      </div>
-    </div>`;
-  }).join('');
-  grid.querySelectorAll('[data-wid][class*="buy"]').forEach(btn=>{
-    btn.addEventListener('click',()=>buyWallpaper(btn.getAttribute('data-wid'),parseInt(btn.getAttribute('data-price'))));
-  });
-  grid.querySelectorAll('[data-wid][class*="apply"]').forEach(btn=>{
-    btn.addEventListener('click',()=>applyWallpaper(btn.getAttribute('data-wid')));
-  });
+    let btn='';
+    if(w.tier==='free'){
+      btn=isActive?'<button class="s-btn active">Actif</button>'
+                  :'<button class="s-btn apply" data-wid="'+w.id+'">Appliquer</button>';
+    } else if(w.tier==='premium'){
+      if(!isPrem) btn='<button class="s-btn locked" onclick="upgradeToPremium()">Abonnement Premium</button>';
+      else btn=isActive?'<button class="s-btn active">Actif</button>'
+                       :'<button class="s-btn apply" data-wid="'+w.id+'">Appliquer</button>';
+    } else {
+      if(isActive) btn='<button class="s-btn active">Actif</button>';
+      else if(isOwned) btn='<button class="s-btn apply" data-wid="'+w.id+'">Appliquer</button>';
+      else if(pts<w.price) btn='<button class="s-btn locked">'+w.price+' stars requis</button>';
+      else btn='<button class="s-btn buy" data-wid="'+w.id+'" data-price="'+w.price+'">Acheter '+w.price+' stars</button>';
+    }
+    return '<div class="s-card"><div class="s-thumb" style="background:'+w.grad+';">'+
+           (isActive?'<span class="s-active-badge">Actif</span>':'')+
+           '</div><div class="s-info"><div class="s-name">'+w.name+'</div>'+
+           '<div class="s-price">'+(w.tier==='free'?'Gratuit':w.tier==='premium'?'Premium':w.price+' stars')+'</div>'+btn+'</div></div>';
+  }
+  const free=WALLPAPERS.filter(w=>w.tier==='free');
+  const stars=WALLPAPERS.filter(w=>w.tier==='stars');
+  const prem=WALLPAPERS.filter(w=>w.tier==='premium');
+  grid.innerHTML=
+    '<div class="menu-sec" style="grid-column:1/-1">Gratuits</div>'+free.map(wpCard).join('')+
+    '<div class="menu-sec" style="grid-column:1/-1">Achetables avec des etoiles</div>'+stars.map(wpCard).join('')+
+    '<div class="menu-sec" style="grid-column:1/-1">Exclusifs Premium</div>'+prem.map(wpCard).join('');
+  grid.querySelectorAll('.s-btn.buy[data-wid]').forEach(b=>b.addEventListener('click',()=>buyWallpaper(b.dataset.wid,parseInt(b.dataset.price))));
+  grid.querySelectorAll('.s-btn.apply[data-wid]').forEach(b=>b.addEventListener('click',()=>applyWallpaper(b.dataset.wid)));
 }
 
 // PROFIL
@@ -1427,9 +1467,10 @@ const IA_HEART_OFF = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none
 function updateIAFavBtn(isFaved){
   const fb = document.getElementById('ia-fav-btn');
   if(!fb) return;
-  fb.innerHTML = isFaved ? IA_HEART_ON : IA_HEART_OFF;
+  fb.innerHTML = isFaved
+    ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="#F72585" stroke="#F72585" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
+    : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
   fb.classList.toggle('faved', isFaved);
-  fb.title = isFaved ? 'Retirer des favoris' : 'Ajouter aux favoris';
 }
 /* ═══════════════════════════════════════════════════════════
    SYSTÈME PREMIUM COMPLET
@@ -1497,7 +1538,8 @@ async function handleStripeReturn(){
 function checkPremiumReturn(){ handleStripeReturn(); } // alias
 
 /* Compteur IA (non-premium = 10/jour, premium = illimité) */
-const IA_FREE_LIMIT = 10;
+const FREE = { ia: 3, favorites: 15, journal: 10 };
+const IA_FREE_LIMIT = FREE.ia;
 function getIACountToday(){
   const today = new Date().toDateString();
   const s = JSON.parse(localStorage.getItem('ca_ia_count')||'{}');
@@ -1519,7 +1561,7 @@ function updateIACounter(){
     el.style.color = '#FFD700';
   } else {
     const left = Math.max(0, IA_FREE_LIMIT - getIACountToday());
-    el.textContent = left + '/' + IA_FREE_LIMIT + ' générations aujourd\'hui';
+    el.textContent = left + '/' + FREE.ia + ' générations gratuits/jour';
     el.style.color = left <= 2 ? 'var(--accent2)' : 'var(--text-muted)';
   }
 }
@@ -1544,6 +1586,20 @@ function esc(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;'
 /* ═══════════════════════════════════════════════════════════
    PWA — Service Worker
    ═══════════════════════════════════════════════════════════ */
+const STAR_PACKS={
+  pack_100:'STRIPE_LINK_100_STARS',
+  pack_350:'STRIPE_LINK_350_STARS',
+  pack_1000:'STRIPE_LINK_1000_STARS',
+};
+function buyStars(p){
+  const lnk=STAR_PACKS[p];
+  if(lnk.includes('STRIPE_LINK')){
+    toast('Configure les liens Stripe dans STAR_PACKS dans le code');
+    return;
+  }
+  window.location.href=lnk;
+}
+
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('/sw.js').catch(()=>{});
 }
