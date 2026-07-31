@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -1587,13 +1586,13 @@ function esc(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;'
    PWA — Service Worker
    ═══════════════════════════════════════════════════════════ */
 const STAR_PACKS={
-  pack_100:'STRIPE_LINK_100_ETOILES_ICI',  // 🔴 0,99€
-  pack_350:'STRIPE_LINK_350_ETOILES_ICI',  // 🔴 2,49€
-  pack_1000:'STRIPE_LINK_1000_ETOILES_ICI', // 🔴 4,99€
+  pack_100:'STRIPE_LINK_100_STARS',
+  pack_350:'STRIPE_LINK_350_STARS',
+  pack_1000:'STRIPE_LINK_1000_STARS',
 };
 function buyStars(p){
   const lnk=STAR_PACKS[p];
-  if(!lnk||lnk.includes('STRIPE_LINK_')){
+  if(lnk.includes('STRIPE_LINK')){
     toast('Configure les liens Stripe dans STAR_PACKS dans le code');
     return;
   }
