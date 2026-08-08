@@ -23,7 +23,30 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Fetch : réseau d'abord pour les API, cache pour le reste
+// Réception d'une notification push (envoyée par le serveur)
+self.addEventListener('push', e => {
+  let data = {};
+  try { data = e.data ? e.data.json() : {}; } catch (err) { data = { title: "Cita'App", body: e.data ? e.data.text() : '' }; }
+  const title = data.title || "Cita'App";
+  const options = {
+    body: data.body || 'Ta citation du jour t\'attend ✨',
+    icon: '/assets/logo-192.png',
+    badge: '/assets/logo-192.png',
+    data: { url: data.url || '/' }
+  };
+  e.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Clic sur la notification : ouvre (ou focus) l'app
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: 'window' }).then(list => {
+      for (const c of list) { if ('focus' in c) return c.focus(); }
+      if (clients.openWindow) return clients.openWindow(e.notification.data?.url || '/');
+    })
+  );
+});
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
