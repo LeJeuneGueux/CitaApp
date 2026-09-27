@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -88,8 +89,8 @@ nav.bnav{position:fixed;bottom:0;left:0;right:0;background:#e9eaf2;display:flex;
 <script>
 const SUPA_URL='https://uwhqavadfgkixrpazqql.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3aHFhdmFkZmdraXhycGF6cXFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4MzUwOTMsImV4cCI6MjA5ODQxMTA5M30.NJtR8ip6v0Arm_ox6vv3UVMGfZw7LxZeYGfAJLYdRm0';
-const STRIPE_PAYMENT_LINK='https://cita-app-azure.vercel.app/?checkout=premium';
-const STAR_PACKS={pack_100:'https://cita-app-azure.vercel.app/?checkout=pack_100',pack_350:'https://cita-app-azure.vercel.app/?checkout=pack_350',pack_1000:'https://cita-app-azure.vercel.app/?checkout=pack_1000'};
+const STRIPE_PAYMENT_LINK='https://buy.stripe.com/aFa4gB0IR6zCff66Yx6g800';
+const STAR_PACKS={pack_100:'https://buy.stripe.com/14AbJ32QZ0be7MEciR6g801',pack_350:'https://buy.stripe.com/cNi8wR9fn5vy1ogdmV6g802',pack_1000:'https://buy.stripe.com/eVq8wR2QZf68aYQ3Ml6g803'};
 const FREE={ia:3,favorites:15,journal:10};
 const IA_FREE_LIMIT=FREE.ia;
 let _sb=null;
@@ -118,7 +119,7 @@ async function addJournalEntry(e){const isPremJ=cache.profile?.premium||false;if
 async function buyWallpaper(id,price){if(getPoints()<price){toast('Pas assez de points 😕');return;}if(cache.ownedWallpapers.includes(id)){await applyWallpaper(id);return;}const uid=currentUser?.id||'guest';cache.ownedWallpapers.push(id);LS.set('o_'+uid,cache.ownedWallpapers);addPoints(-price);await applyWallpaper(id);toast('Fond débloqué ! 🎉');if(_sb&&currentUser&&!guestMode)_sb.from('owned_wallpapers').insert({user_id:uid,wallpaper_id:id}).then(({error})=>{if(error)console.warn('Supabase wp:',error.message);});}
 async function applyWallpaper(id){const uid=currentUser?.id||'guest';if(cache.profile)cache.profile.active_wallpaper=id;LS.set('p_'+uid,cache.profile);applyWpToBody(id);try{renderShop();}catch(e){}if(_sb&&currentUser&&!guestMode)_sb.from('profiles').update({active_wallpaper:id}).eq('id',uid);}
 function applyWpToBody(id){const w=WALLPAPERS.find(x=>x.id===id);if(w)document.body.style.background=w.grad;}
-function buyStars(p){const lnk=STAR_PACKS[p];if(!lnk||lnk.includes('CONFIGURE')){toast('Configure les liens Stripe dans STAR_PACKS dans le code');return;}window.location.href=lnk;}
+function buyStars(p){const lnk=STAR_PACKS[p];if(!lnk||lnk.includes('CONFIGURE')){toast('Configure les liens Stripe dans STAR_PACKS dans le code');return;}const uid=currentUser?currentUser.id:null;if(!uid||guestMode){toast('Crée un compte pour acheter des étoiles (le mode invité ne peut pas payer)');return;}window.location.href=lnk+'?client_reference_id='+encodeURIComponent(uid);}
 if(_sb){_sb.auth.onAuthStateChange(async(event,session)=>{if(guestMode)return;if(session?.user){currentUser=session.user;await loadUserData();enterApp();}else{const localUser=LocalAuth.getCurrentUser();if(localUser){currentUser=localUser;guestMode=true;await loadUserData();enterApp();}else{currentUser=null;cache={profile:null,favorites:[],journal:[],ownedWallpapers:[],moodLog:[]};showScreen('landing');}}});}else{const localUser=LocalAuth.getCurrentUser();if(localUser){currentUser=localUser;guestMode=true;loadUserData().then(()=>enterApp());}else{showScreen('landing');}}
 function showScreen(s){document.getElementById('loading-screen').style.display='none';['landing','login','signup'].forEach(id=>{document.getElementById('screen-'+id).style.display=id===s?'flex':'none';});document.getElementById('app').style.display=s==='app'?'block':'none';}
 document.getElementById('login-form').addEventListener('submit',async e=>{e.preventDefault();clearMsgs('login');const btn=e.target.querySelector('[type=submit]'),orig=btn.textContent;btn.textContent='⏳…';btn.disabled=true;const email=document.getElementById('l-email').value.trim();const pw=document.getElementById('l-pw').value;if(_sb){const{error}=await _sb.auth.signInWithPassword({email,password:pw});btn.textContent=orig;btn.disabled=false;if(error)showErr('login',error.message.includes('Invalid login')?'Email ou mot de passe incorrect.':error.message.includes('Email not confirmed')?"Confirme d'abord ton email.": error.message);}else{const r=LocalAuth.signIn(email,pw);btn.textContent=orig;btn.disabled=false;if(r.error){showErr('login',r.error);return;}currentUser=r.user;guestMode=true;await loadUserData();enterApp();}});
@@ -180,9 +181,32 @@ document.getElementById('j-cancel').addEventListener('click',()=>{document.getEl
 document.getElementById('j-save').addEventListener('click',async()=>{const p1=document.getElementById('jp1').value.trim();const p2=document.getElementById('jp2').value.trim();const p3=document.getElementById('jp3').value.trim();const ch=document.getElementById('jchall').value.trim();if(!p1&&!p2&&!p3&&!ch){toast('Écris au moins une ligne !');return;}await addJournalEntry({p1,p2,p3,ch});document.getElementById('j-form-wrap').style.display='none';['jp1','jp2','jp3','jchall'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});renderJournal();});
 async function checkPremium(){let isPrem=false;if(_sb&&currentUser&&!guestMode){const{data}=await _sb.from('profiles').select('premium').eq('id',currentUser.id).single();isPrem=data?.premium||false;if(cache.profile)cache.profile.premium=isPrem;}else{isPrem=cache.profile?.premium||LS.get('premium',false);}applyPremiumUI(isPrem);return isPrem;}
 function applyPremiumUI(isPrem){const badge=document.getElementById('prem-badge');if(badge)badge.style.display=isPrem?'inline-flex':'none';const banner=document.getElementById('prem-banner');if(banner)banner.style.display=isPrem?'none':'block';try{renderShop();}catch(e){}updateIACounter();}
-function upgradeToPremium(){if(!STRIPE_PAYMENT_LINK||STRIPE_PAYMENT_LINK.includes('CONFIGURE')){toast('💡 Configure STRIPE_PAYMENT_LINK dans le code');setTimeout(()=>alert('Étapes Stripe :\n1. dashboard.stripe.com → Products → + Add product\n2. Nom : Premium CitaApp · Prix : 4,99€/mois\n3. Payment Links → Create link\n4. Success URL : '+location.origin+'/?premium_success=1\n5. Colle le lien dans STRIPE_PAYMENT_LINK dans le code'),400);return;}window.location.href=STRIPE_PAYMENT_LINK;}
+function upgradeToPremium(){if(!STRIPE_PAYMENT_LINK||STRIPE_PAYMENT_LINK.includes('CONFIGURE')){toast('💡 Configure STRIPE_PAYMENT_LINK dans le code');setTimeout(()=>alert('Étapes Stripe :\n1. dashboard.stripe.com → Products → + Add product\n2. Nom : Premium CitaApp · Prix : 4,99€/mois\n3. Payment Links → Create link\n4. Success URL : '+location.origin+'/?checkout=premium\n5. Colle le lien dans STRIPE_PAYMENT_LINK dans le code'),400);return;}const uid=currentUser?currentUser.id:null;if(!uid||guestMode){toast('Crée un compte pour passer Premium (le mode invité ne peut pas payer)');return;}window.location.href=STRIPE_PAYMENT_LINK+'?client_reference_id='+encodeURIComponent(uid);}
 function goPremium(){upgradeToPremium();}
-async function handleStripeReturn(){const params=new URLSearchParams(location.search);if(params.get('premium_success')!=='1')return;history.replaceState({},'',location.pathname);if(!currentUser){toast('Connecte-toi pour activer le Premium.');return;}if(cache.profile)cache.profile.premium=true;if(_sb&&!guestMode){await _sb.from('profiles').update({premium:true}).eq('id',currentUser.id);}else{LS.set('premium',true);}applyPremiumUI(true);toast('✨ Bienvenue en Premium ! Tout est débloqué.');}
+async function handleStripeReturn(){
+const params=new URLSearchParams(location.search);
+const kind=params.get('checkout');
+if(!kind)return;
+history.replaceState({},'',location.pathname);
+if(!currentUser||guestMode){toast('Connecte-toi pour vérifier ton achat.');return;}
+toast('⏳ Vérification de ton paiement...');
+const before=cache.profile?JSON.stringify({premium:cache.profile.premium,points:cache.profile.points}):null;
+for(let i=0;i<8;i++){
+  await new Promise(r=>setTimeout(r,1500));
+  if(!_sb)break;
+  const{data,error}=await _sb.from('profiles').select('premium,points').eq('id',currentUser.id).single();
+  if(error||!data)continue;
+  const changed=kind==='premium'?data.premium===true:JSON.stringify({premium:cache.profile.premium,points:cache.profile.points})!==before&&data.points>(cache.profile?.points||0);
+  if(cache.profile){cache.profile.premium=data.premium;cache.profile.points=data.points;}
+  updatePtsUI(data.points);
+  if(changed){
+    if(kind==='premium'){applyPremiumUI(true);toast('✨ Bienvenue en Premium ! Tout est débloqué.');}
+    else{toast('⭐ Étoiles créditées ! Merci pour ton achat.');try{if(typeof renderShop==='function')renderShop();}catch(e){}}
+    return;
+  }
+}
+toast('Paiement en cours de vérification — ça peut prendre quelques secondes de plus, reviens sur cette page dans un instant.');
+}
 document.getElementById('btn-premium').addEventListener('click',upgradeToPremium);
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window.__tt);window.__tt=setTimeout(()=>t.classList.remove('show'),2400);}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
