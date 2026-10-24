@@ -2,7 +2,7 @@
 // CITA'APP — SERVICE WORKER (PWA)
 // Gère le cache offline et les ressources statiques
 // =====================================================
-const CACHE = 'citaapp-v1';
+const CACHE = 'citaapp-v2';
 const STATIC = ['/', '/index.html', '/manifest.json', '/sw.js'];
 
 // Installation : met en cache les fichiers statiques
@@ -54,7 +54,8 @@ self.addEventListener('fetch', e => {
   if (
     url.hostname.includes('supabase.co') ||
     url.hostname.includes('stripe.com') ||
-    url.hostname.includes('jsdelivr.net')
+    url.hostname.includes('jsdelivr.net') ||
+    url.hostname.includes('clarity.ms')
   ) {
     e.respondWith(fetch(e.request).catch(() => new Response('', {status: 503})));
     return;
