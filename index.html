@@ -217,7 +217,7 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{}); }
 </script>
-<div id="consent-bar" role="dialog" aria-label="Cookies"><b>Statistiques anonymes</b> — j'utilise Microsoft Clarity pour comprendre comment l'appli est utilisée (clics, scroll) et l'améliorer. Rien n'est activé sans ton accord.<div class="cb-row"><button class="cb-no" id="cb-no" type="button">Refuser</button><button class="cb-yes" id="cb-yes" type="button">Accepter</button></div></div>
+<div id="consent-bar" role="dialog" aria-label="Cookies"><b>Cookies</b> — On les utilise pour mesurer l'audience et améliorer l'appli.<div class="cb-row"><button class="cb-no" id="cb-no" type="button">Refuser</button><button class="cb-yes" id="cb-yes" type="button">Accepter</button></div></div>
 <script>
 (function(){
 var KEY='citaapp_consent',ID='xf7skzohf9';
