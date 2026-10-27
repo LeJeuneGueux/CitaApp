@@ -49,6 +49,7 @@ nav.bnav{position:fixed;bottom:0;left:0;right:0;background:#e9eaf2;display:flex;
 #consent-bar b{color:var(--accent);}#consent-bar .cb-row{display:flex;gap:8px;margin-top:10px;}
 #consent-bar button{flex:1;padding:10px 12px;border-radius:12px;font-weight:700;font-size:13px;}
 #consent-bar .cb-yes{background:var(--grad);color:#1F3D30;}#consent-bar .cb-no{background:rgba(255,255,255,.08);color:var(--text);}
+.story-b{background:transparent;font-size:15px;padding:4px 6px;line-height:1;}
 </style>
 </head>
 <body>
@@ -117,10 +118,10 @@ function checkDailyStreak(){if(!cache.profile)return;const today=new Date();cons
 function showStreakModal(streak,reward,lost){const bg=document.getElementById('streak-modal-bg');const row=document.getElementById('streak-count-row');const title=document.getElementById('streak-modal-title');const sub=document.getElementById('streak-modal-sub');const next=document.getElementById('streak-modal-next');if(!bg)return;title.textContent=lost?'Série remise à 1 jour':'Série de '+streak+' jour'+(streak>1?'s':'')+' !';sub.textContent=(lost?'Tu avais raté un jour — pas grave, on repart ! ':'')+'Aujourd’hui : +'+reward+' ⭐';const nextReward=Math.min(5+(streak*2),30);if(next){if(reward>=30){next.textContent='🏆 Tu es au bonus maximum : +30 ⭐ chaque jour tant que ta série continue.';}else{next.textContent='Reviens demain (jour '+(streak+1)+') pour +'+nextReward+' ⭐ — le bonus grandit chaque jour jusqu’à +30 ⭐.';}}row.innerHTML='';const totalSlots=7;for(let i=1;i<=totalSlots;i++){const done=i<=(((streak-1)%totalSlots)+1);row.innerHTML+='<div class="streak-day'+(done?' done':'')+'">'+(done?'🔥':i)+'</div>';}bg.classList.add('show');}
 document.getElementById('btn-streak-ok').addEventListener('click',()=>{document.getElementById('streak-modal-bg').classList.remove('show');});
 function isFav(text){return cache.favorites.some(f=>f.quote_text===text);}
-async function addFav(q){if(isFav(q.t)){toast('Déjà dans tes favoris ❤️');return;}const isPremF=cache.profile?.premium||false;if(!isPremF&&cache.favorites.length>=FREE.favorites){toast('Limite : '+FREE.favorites+' favoris max. Passe en Premium ✨');return;}try{const uid=currentUser?.id||'guest';const fav={id:Date.now().toString(),quote_text:q.t,quote_author:q.a||'',quote_cat:q.c||'',created_at:new Date().toISOString()};cache.favorites.unshift(fav);try{localStorage.setItem('ca_f_'+uid,JSON.stringify(cache.favorites));}catch(e){}toast('Ajouté aux favoris ❤️ +5 points');try{addPoints(5);}catch(e){}try{renderFavorites();}catch(e){}try{renderProfileStats();}catch(e){}if(_sb&&currentUser&&!guestMode){_sb.from('favorites').insert({user_id:uid,quote_text:q.t,quote_author:q.a||'',quote_cat:q.c||''}).then(({error})=>{if(error)console.warn('Supabase fav:',error.message);});}}catch(e){console.error('addFav:',e);toast('Erreur ❌ '+e.message);}}
+async function addFav(q){if(isFav(q.t)){toast('Déjà dans tes favoris ❤️');return;}const isPremF=cache.profile?.premium||false;if(!isPremF&&cache.favorites.length>=FREE.favorites){showPaywall('fav');return;}try{const uid=currentUser?.id||'guest';const fav={id:Date.now().toString(),quote_text:q.t,quote_author:q.a||'',quote_cat:q.c||'',created_at:new Date().toISOString()};cache.favorites.unshift(fav);try{localStorage.setItem('ca_f_'+uid,JSON.stringify(cache.favorites));}catch(e){}toast('Ajouté aux favoris ❤️ +5 points');try{addPoints(5);}catch(e){}try{renderFavorites();}catch(e){}try{renderProfileStats();}catch(e){}if(_sb&&currentUser&&!guestMode){_sb.from('favorites').insert({user_id:uid,quote_text:q.t,quote_author:q.a||'',quote_cat:q.c||''}).then(({error})=>{if(error)console.warn('Supabase fav:',error.message);});}}catch(e){console.error('addFav:',e);toast('Erreur ❌ '+e.message);}}
 async function removeFav(text){const uid=currentUser?.id||'guest';const fav=cache.favorites.find(f=>f.quote_text===text);cache.favorites=cache.favorites.filter(f=>f.quote_text!==text);try{localStorage.setItem('ca_f_'+uid,JSON.stringify(cache.favorites));}catch(e){}toast('Retiré des favoris');renderFavorites();renderProfileStats();if(_sb&&currentUser&&!guestMode&&fav)_sb.from('favorites').delete().eq('id',fav.id);}
 async function toggleFav(q){if(isFav(q.t))await removeFav(q.t);else await addFav(q);refreshAllCards();}
-async function addJournalEntry(e){const isPremJ=cache.profile?.premium||false;if(!isPremJ&&cache.journal.length>=FREE.journal){toast('Limite : '+FREE.journal+' entrées max. Passe en Premium ✨');return;}const uid=currentUser?.id||'guest';const entry={id:Date.now().toString(),positive1:e.p1||null,positive2:e.p2||null,positive3:e.p3||null,challenge:e.ch||null,created_at:new Date().toISOString()};cache.journal.unshift(entry);LS.set('j_'+uid,cache.journal);addPoints(5);toast('Entrée enregistrée 📖 +5 points');renderProfileStats();renderJournal();if(_sb&&currentUser&&!guestMode)_sb.from('journal_entries').insert({user_id:uid,positive1:e.p1||null,positive2:e.p2||null,positive3:e.p3||null,challenge:e.ch||null});}
+async function addJournalEntry(e){const isPremJ=cache.profile?.premium||false;if(!isPremJ&&cache.journal.length>=FREE.journal){showPaywall('journal');return;}const uid=currentUser?.id||'guest';const entry={id:Date.now().toString(),positive1:e.p1||null,positive2:e.p2||null,positive3:e.p3||null,challenge:e.ch||null,created_at:new Date().toISOString()};cache.journal.unshift(entry);LS.set('j_'+uid,cache.journal);addPoints(5);toast('Entrée enregistrée 📖 +5 points');renderProfileStats();renderJournal();if(_sb&&currentUser&&!guestMode)_sb.from('journal_entries').insert({user_id:uid,positive1:e.p1||null,positive2:e.p2||null,positive3:e.p3||null,challenge:e.ch||null});}
 async function buyWallpaper(id,price){if(getPoints()<price){toast('Pas assez de points 😕');return;}if(cache.ownedWallpapers.includes(id)){await applyWallpaper(id);return;}const uid=currentUser?.id||'guest';cache.ownedWallpapers.push(id);LS.set('o_'+uid,cache.ownedWallpapers);addPoints(-price);await applyWallpaper(id);toast('Fond débloqué ! 🎉');if(_sb&&currentUser&&!guestMode)_sb.from('owned_wallpapers').insert({user_id:uid,wallpaper_id:id}).then(({error})=>{if(error)console.warn('Supabase wp:',error.message);});}
 async function applyWallpaper(id){const uid=currentUser?.id||'guest';if(cache.profile)cache.profile.active_wallpaper=id;LS.set('p_'+uid,cache.profile);applyWpToBody(id);try{renderShop();}catch(e){}if(_sb&&currentUser&&!guestMode)_sb.from('profiles').update({active_wallpaper:id}).eq('id',uid);}
 function applyWpToBody(id){const w=WALLPAPERS.find(x=>x.id===id);if(w)document.body.style.background=w.grad;}
@@ -156,8 +157,8 @@ function renderMirror(){const wrap=document.getElementById('mirror-content');if(
 document.querySelectorAll('.bnav button[data-page]').forEach(b=>{b.addEventListener('click',()=>goTo(b.getAttribute('data-page')));});
 function openCat(cat){currentCat=cat;const names={motivation:'Motivation',calme:'Calme & Sérénité',confiance:'Confiance en soi',courage:'Courage',succès:'Succès',résilience:'Résilience',bonheur:'Bonheur',persévérance:'Persévérance',gratitude:'Gratitude',rêves:'Rêves & Ambition',travail:'Travail & Discipline',changement:'Changement',présent:"L'instant présent",amour:'Amour & Relations',créativité:'Créativité'};const subs={motivation:'Boostez votre énergie quotidienne',calme:'Trouvez la paix intérieure',confiance:'Croyez en votre potentiel',courage:'Osez dépasser vos limites',succès:'Atteignez vos objectifs',résilience:'Rebondissez plus fort',bonheur:'Cultivez la joie',persévérance:'Continuez coûte que coûte',gratitude:'Appréciez ce que vous avez',rêves:'Visez les étoiles',travail:'Excellence au quotidien',changement:'Évoluez constamment',présent:'Vivez ici et maintenant',amour:'Connectez-vous aux autres',créativité:'Libérez votre imagination'};const icons={motivation:'⚡',calme:'🌊',confiance:'✨',courage:'🔥',succès:'🏆',résilience:'💪',bonheur:'🌸',persévérance:'🎯',gratitude:'🙏',rêves:'⭐',travail:'💼',changement:'🔄',présent:'⏳',amour:'❤️',créativité:'🎨'};document.getElementById('list-title').textContent=names[cat]||cat;document.getElementById('list-sub').textContent=subs[cat]||'';const ic=document.getElementById('list-icon');ic.textContent=icons[cat]||'📚';renderCatQuotes(cat);logMoodEvent(cat);goTo('page-list');}
 const CAT_META={motivation:{icon:'⚡'},calme:{icon:'🌊'},confiance:{icon:'✨'},courage:{icon:'🔥'},succès:{icon:'🏆'},résilience:{icon:'💪'},bonheur:{icon:'🌸'},persévérance:{icon:'🎯'},gratitude:{icon:'🙏'},rêves:{icon:'⭐'},travail:{icon:'💼'},changement:{icon:'🔄'},présent:{icon:'⏳'},amour:{icon:'❤️'},créativité:{icon:'🎨'}};
-function buildQCard(q,delay=0){const fav=isFav(q.t);const meta=CAT_META[q.c]||{icon:'💬'};return '<div class="q-card" style="animation-delay:'+delay+'s;"><div class="q-top"><span class="q-mark">"</span><span style="font-size:18px;">'+meta.icon+'</span></div><div class="q-text">'+q.t+'</div><div class="q-footer"><div class="q-author"><span class="q-name">'+q.a+'</span></div><div class="q-actions"><button class="fav-toggle'+(fav?' fav-on':'')+'" data-qt="'+encodeURIComponent(q.t)+'" title="Favori">'+(fav?'❤️':'🤍')+'</button><button class="share-b" data-qt="'+encodeURIComponent(q.t)+'" title="Copier"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div></div></div>';}
-function bindCards(container,list){container.querySelectorAll('.fav-toggle').forEach(btn=>{btn.addEventListener('click',async()=>{const text=decodeURIComponent(btn.getAttribute('data-qt'));const q=list.find(x=>x.t===text)||QUOTE_DB.find(x=>x.t===text);if(q){await toggleFav(q);}});});container.querySelectorAll('.share-b').forEach(btn=>{btn.addEventListener('click',()=>{const text=decodeURIComponent(btn.getAttribute('data-qt'));if(navigator.clipboard&&location.protocol!=='file:'){navigator.clipboard.writeText(text).then(()=>toast('Citation copiée 📋'));}else{const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0;top:0;left:0;';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Citation copiée 📋');}catch(e){}document.body.removeChild(ta);}});});}
+function buildQCard(q,delay=0){const fav=isFav(q.t);const meta=CAT_META[q.c]||{icon:'💬'};return '<div class="q-card" style="animation-delay:'+delay+'s;"><div class="q-top"><span class="q-mark">"</span><span style="font-size:18px;">'+meta.icon+'</span></div><div class="q-text">'+q.t+'</div><div class="q-footer"><div class="q-author"><span class="q-name">'+q.a+'</span></div><div class="q-actions"><button class="fav-toggle'+(fav?' fav-on':'')+'" data-qt="'+encodeURIComponent(q.t)+'" title="Favori">'+(fav?'❤️':'🤍')+'</button><button class="share-b" data-qt="'+encodeURIComponent(q.t)+'" title="Copier"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><button class="story-b" data-qt="'+encodeURIComponent(q.t)+'" title="Partager en story">📸</button></div></div></div>';}
+function bindCards(container,list){container.querySelectorAll('.story-b').forEach(btn=>{btn.addEventListener('click',()=>{const text=decodeURIComponent(btn.getAttribute('data-qt'));const q=list.find(x=>x.t===text)||QUOTE_DB.find(x=>x.t===text);if(q)openStory(q);});});container.querySelectorAll('.fav-toggle').forEach(btn=>{btn.addEventListener('click',async()=>{const text=decodeURIComponent(btn.getAttribute('data-qt'));const q=list.find(x=>x.t===text)||QUOTE_DB.find(x=>x.t===text);if(q){await toggleFav(q);}});});container.querySelectorAll('.share-b').forEach(btn=>{btn.addEventListener('click',()=>{const text=decodeURIComponent(btn.getAttribute('data-qt'));if(navigator.clipboard&&location.protocol!=='file:'){navigator.clipboard.writeText(text).then(()=>toast('Citation copiée 📋'));}else{const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0;top:0;left:0;';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Citation copiée 📋');}catch(e){}document.body.removeChild(ta);}});});}
 function refreshAllCards(){if(homeSelectionCache.length)renderHomeQuotes(homeSelectionCache);renderToday();renderFavorites();if(currentCat)renderCatQuotes(currentCat);}
 function renderHomeQuotes(fixed){const list=fixed||[...QUOTE_DB].sort(()=>Math.random()-.5).slice(0,3);homeSelectionCache=list;const wrap=document.getElementById('home-quotes');wrap.innerHTML=list.map((q,i)=>buildQCard(q,i*.07)).join('');bindCards(wrap,list);}
 document.getElementById('btn-refresh').addEventListener('click',()=>{renderHomeQuotes([...QUOTE_DB].sort(()=>Math.random()-.5).slice(0,3));toast('Nouvelle sélection ✨');});
@@ -177,7 +178,7 @@ function displayIAResult(q,input){if(!q)return;const intro=getPersonalizedIntro(
 function getIACountToday(){const today=new Date().toDateString();const s=JSON.parse(localStorage.getItem('ca_ia_count')||'{}');return s.date===today?(s.count||0):0;}
 function incrementIACount(){const today=new Date().toDateString();const s=JSON.parse(localStorage.getItem('ca_ia_count')||'{}');const count=s.date===today?(s.count||0)+1:1;localStorage.setItem('ca_ia_count',JSON.stringify({date:today,count}));return count;}
 function updateIACounter(){const isPrem=cache.profile?.premium||false;const el=document.getElementById('ia-counter');if(!el)return;if(isPrem){el.textContent='✨ Premium · IA illimitée';el.style.color='#FFD700';}else{const left=Math.max(0,IA_FREE_LIMIT-getIACountToday());el.textContent=left+'/'+FREE.ia+' générations gratuites/jour';el.style.color=left<=1?'var(--accent2)':'var(--text-muted)';}}
-document.getElementById('ia-btn').addEventListener('click',()=>{const isPrem=cache.profile?.premium||false;if(!isPrem&&getIACountToday()>=IA_FREE_LIMIT){toast('Limite atteinte 😕 Passe en Premium pour l\'IA illimitée ✨');goTo('page-shop');return;}incrementIACount();updateIACounter();runIA();});
+document.getElementById('ia-btn').addEventListener('click',()=>{const isPrem=cache.profile?.premium||false;if(!isPrem&&getIACountToday()>=IA_FREE_LIMIT){showPaywall('ia');return;}incrementIACount();updateIACounter();runIA();});
 document.getElementById('ia-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey)runIA();});
 document.getElementById('ia-fav-btn').addEventListener('click',async()=>{const text=decodeURIComponent(document.getElementById('ia-result').dataset.qt||'');if(!text)return;const q=QUOTE_DB.find(x=>x.t===text)||{t:text,a:'Généré par IA',c:'motivation',k:[],m:'boost'};await toggleFav(q);updateIAFavBtn(isFav(text));});
 document.getElementById('ia-another-btn').addEventListener('click',()=>{iaResultIndex=(iaResultIndex+1)%Math.max(1,iaLastResults.length);const q=iaLastResults[iaResultIndex];if(q)displayIAResult(q,document.getElementById('ia-input').value);else runIA();});
@@ -215,6 +216,80 @@ toast('Paiement en cours de vérification — ça peut prendre quelques secondes
 document.getElementById('btn-premium').addEventListener('click',upgradeToPremium);
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window.__tt);window.__tt=setTimeout(()=>t.classList.remove('show'),2400);}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+/* ===== Partage en story + paywall contextuel ===== */
+const STORY_THEMES={nuit:{n:"Nuit",free:true,bg:["#10142e","#1F3D30"],txt:"#F4EEE0",acc:"#E3AE4C"},aube:{n:"Aube",free:false,bg:["#E3AE4C","#D9814E"],txt:"#1F3D30",acc:"#1F3D30"},foret:{n:"Forêt",free:false,bg:["#1F3D30","#0d1f17"],txt:"#F4EEE0",acc:"#7A9B6E"},ivoire:{n:"Ivoire",free:false,bg:["#FBF6EC","#EFE5D0"],txt:"#1F3D30",acc:"#D9814E"}};
+function storyWrap(ctx,text,maxW){const words=String(text).split(" ");const lines=[];let cur="";for(const w of words){const t=cur?cur+" "+w:w;if(ctx.measureText(t).width>maxW&&cur){lines.push(cur);cur=w;}else cur=t;}if(cur)lines.push(cur);return lines;}
+function drawStory(q,key,isPrem){
+  const th=STORY_THEMES[key]||STORY_THEMES.nuit;const c=document.createElement("canvas");c.width=1080;c.height=1920;const x=c.getContext("2d");
+  const g=x.createLinearGradient(0,0,0,1920);g.addColorStop(0,th.bg[0]);g.addColorStop(1,th.bg[1]);x.fillStyle=g;x.fillRect(0,0,1080,1920);
+  x.textAlign="center";x.textBaseline="alphabetic";
+  const streak=(cache.profile&&cache.profile.streak)||0;
+  if(streak>0){x.font="700 40px Georgia, serif";x.fillStyle=th.acc;x.fillText("🔥 "+streak+" jour"+(streak>1?"s":"")+" de suite",540,200);}
+  x.globalAlpha=0.35;x.fillStyle=th.acc;x.font="700 260px Georgia, serif";x.fillText("“",540,560);x.globalAlpha=1;
+  const len=q.t.length;const fs=len>140?54:len>100?62:len>70?72:84;
+  x.font="700 "+fs+"px Georgia, serif";x.fillStyle=th.txt;
+  const lines=storyWrap(x,q.t,860);const lh=Math.round(fs*1.32);let y=960-Math.round(lines.length*lh/2)+fs/2;
+  lines.forEach(l=>{x.fillText(l,540,y);y+=lh;});
+  x.font="italic 400 44px Georgia, serif";x.fillStyle=th.acc;x.fillText("— "+q.a,540,y+50);
+  if(!isPrem){
+    const label="Cita'App · cita-app-azure.vercel.app";x.font="600 36px -apple-system, Segoe UI, Roboto, sans-serif";
+    const w=x.measureText(label).width+80;const px=540-w/2,py=1740;
+    x.fillStyle="rgba(0,0,0,0.28)";x.beginPath();x.roundRect?x.roundRect(px,py,w,84,42):x.rect(px,py,w,84);x.fill();
+    x.fillStyle=th.txt;x.fillText(label,540,py+54);
+    x.font="400 30px -apple-system, Segoe UI, Roboto, sans-serif";x.globalAlpha=0.75;x.fillText("Ta citation du jour, gratuite",540,py+140);x.globalAlpha=1;
+  }else{x.font="600 30px -apple-system, Segoe UI, Roboto, sans-serif";x.globalAlpha=0.45;x.fillStyle=th.txt;x.fillText("Cita'App",540,1820);x.globalAlpha=1;}
+  return c;
+}
+function closeOv(id){const o=document.getElementById(id);if(o)o.remove();}
+async function shareStoryCanvas(c){
+  c.toBlob(async b=>{
+    if(!b){toast("Impossible de créer l'image");return;}
+    const f=new File([b],"citaapp-citation.png",{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f]});return;}catch(e){if(e&&e.name==="AbortError")return;}}
+    const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="citaapp-citation.png";document.body.appendChild(a);a.click();a.remove();toast("Image téléchargée 📸");
+  },"image/png");
+}
+function openStory(q){
+  closeOv("story-ov");
+  const isPrem=!!(cache.profile&&cache.profile.premium);let key="nuit";
+  const ov=document.createElement("div");ov.id="story-ov";
+  ov.style.cssText="position:fixed;inset:0;z-index:100000;background:rgba(5,8,18,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:10px;overflow:auto;";
+  const img=document.createElement("img");img.style.cssText="max-height:56vh;max-width:88vw;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.5);";
+  const chips=document.createElement("div");chips.style.cssText="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;";
+  const note=document.createElement("div");note.style.cssText="font-size:13px;color:var(--text-muted);text-align:center;min-height:18px;max-width:340px;";
+  const row=document.createElement("div");row.style.cssText="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;";
+  let cv=null;
+  function refresh(){cv=drawStory(q,key,isPrem);img.src=cv.toDataURL("image/png");
+    note.textContent=isPrem?"Sans filigrane ✨":"Gratuit : le logo Cita'App est ajouté. Premium le retire et débloque tous les styles.";
+    [...chips.children].forEach(b=>{b.style.outline=b.dataset.k===key?"2px solid var(--accent)":"none";});}
+  Object.keys(STORY_THEMES).forEach(k=>{const t=STORY_THEMES[k];const b=document.createElement("button");b.dataset.k=k;
+    b.textContent=(t.free||isPrem?"":"🔒 ")+t.n;b.style.cssText="padding:8px 14px;border-radius:999px;font-weight:700;font-size:13px;background:rgba(255,255,255,.1);color:var(--text);";
+    b.onclick=()=>{if(!t.free&&!isPrem){note.textContent="🔒 Style réservé à Premium";note.style.color="var(--accent)";return;}key=k;note.style.color="var(--text-muted)";refresh();};chips.appendChild(b);});
+  const mk=(label,primary,fn)=>{const b=document.createElement("button");b.textContent=label;b.style.cssText="padding:12px 18px;border-radius:14px;font-weight:800;font-size:14px;"+(primary?"background:var(--grad);color:#1F3D30;":"background:rgba(255,255,255,.1);color:var(--text);");b.onclick=fn;row.appendChild(b);};
+  mk("Partager en story 📸",true,()=>shareStoryCanvas(cv));
+  if(!isPrem)mk("Retirer le filigrane ✨",false,()=>{closeOv("story-ov");goPremium();});
+  mk("Fermer",false,()=>closeOv("story-ov"));
+  ov.append(img,chips,note,row);ov.addEventListener("click",e=>{if(e.target===ov)closeOv("story-ov");});
+  document.body.appendChild(ov);refresh();
+}
+const PAYWALL_TXT={
+  fav:()=>["Ta collection est pleine ❤️","Tu as gardé "+FREE.favorites+" citations qui te parlent. Avec Premium, garde-les toutes."],
+  journal:()=>["Ton journal prend de l'ampleur 📓",FREE.journal+" entrées : bravo, c'est une vraie habitude. Avec Premium, continue sans limite."],
+  ia:()=>["Tes citations IA du jour sont utilisées ✨","Reviens demain, ou passe en Premium pour en générer autant que tu veux."]
+};
+function showPaywall(reason){
+  closeOv("paywall-ov");const t=(PAYWALL_TXT[reason]||PAYWALL_TXT.fav)();
+  const ov=document.createElement("div");ov.id="paywall-ov";
+  ov.style.cssText="position:fixed;inset:0;z-index:100000;background:rgba(5,8,18,.88);display:flex;align-items:center;justify-content:center;padding:18px;";
+  const box=document.createElement("div");box.style.cssText="background:#16291f;border:1px solid rgba(227,174,76,.4);border-radius:22px;padding:24px 20px;max-width:380px;width:100%;color:var(--text);box-shadow:0 20px 50px rgba(0,0,0,.5);";
+  const h=document.createElement("div");h.textContent=t[0];h.style.cssText="font-family:var(--font-serif);font-size:22px;font-weight:700;margin-bottom:6px;";
+  const p=document.createElement("div");p.textContent=t[1];p.style.cssText="font-size:14px;color:var(--text-muted);margin-bottom:14px;line-height:1.45;";
+  const ul=document.createElement("div");ul.style.cssText="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:14px;";
+  ["Favoris, journal et citations IA illimités","« Mon reflet » : tout ton historique, pas seulement 7 jours","Citations à partager sans filigrane, styles exclusifs","Ta série protégée : 3 jours de grâce si tu rates un jour"].forEach(s=>{const d=document.createElement("div");d.textContent="✓ "+s;ul.appendChild(d);});
+  const b1=document.createElement("button");b1.textContent="Passer en Premium ✨";b1.style.cssText="width:100%;padding:14px;border-radius:14px;font-weight:800;font-size:15px;background:var(--grad);color:#1F3D30;margin-bottom:8px;";b1.onclick=()=>{closeOv("paywall-ov");goPremium();};
+  const b2=document.createElement("button");b2.textContent="Plus tard";b2.style.cssText="width:100%;padding:11px;border-radius:14px;font-weight:700;font-size:13px;background:rgba(255,255,255,.08);color:var(--text);";b2.onclick=()=>closeOv("paywall-ov");
+  box.append(h,p,ul,b1,b2);ov.appendChild(box);ov.addEventListener("click",e=>{if(e.target===ov)closeOv("paywall-ov");});document.body.appendChild(ov);
+}
 if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{}); }
 </script>
 <div id="consent-bar" role="dialog" aria-label="Cookies"><b>Cookies</b> — On les utilise pour mesurer l'audience et améliorer l'appli.<div class="cb-row"><button class="cb-no" id="cb-no" type="button">Refuser</button><button class="cb-yes" id="cb-yes" type="button">Accepter</button></div></div>
