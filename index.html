@@ -232,11 +232,11 @@ function drawStory(q,key,isPrem){
   lines.forEach(l=>{x.fillText(l,540,y);y+=lh;});
   x.font="italic 400 44px Georgia, serif";x.fillStyle=th.acc;x.fillText("— "+q.a,540,y+50);
   if(!isPrem){
-    const label="Cita'App · cita-app-azure.vercel.app";x.font="600 36px -apple-system, Segoe UI, Roboto, sans-serif";
-    const w=x.measureText(label).width+80;const px=540-w/2,py=1740;
-    x.fillStyle="rgba(0,0,0,0.28)";x.beginPath();x.roundRect?x.roundRect(px,py,w,84,42):x.rect(px,py,w,84);x.fill();
-    x.fillStyle=th.txt;x.fillText(label,540,py+54);
-    x.font="400 30px -apple-system, Segoe UI, Roboto, sans-serif";x.globalAlpha=0.75;x.fillText("Ta citation du jour, gratuite",540,py+140);x.globalAlpha=1;
+    const gr=x.createLinearGradient(0,1560,0,1920);gr.addColorStop(0,"rgba(0,0,0,0)");gr.addColorStop(1,"rgba(0,0,0,0.55)");x.fillStyle=gr;x.fillRect(0,1560,1080,360);
+    x.textAlign="left";x.shadowColor="rgba(0,0,0,0.6)";x.shadowBlur=14;
+    x.font="italic 600 40px Georgia, serif";x.fillStyle="#FFFFFF";x.fillText("made with",70,1760);
+    x.font="800 118px Georgia, serif";x.fillStyle="#E3AE4C";x.fillText("Cita\u2019App",66,1868);
+    x.shadowBlur=0;x.textAlign="center";
   }else{x.font="600 30px -apple-system, Segoe UI, Roboto, sans-serif";x.globalAlpha=0.45;x.fillStyle=th.txt;x.fillText("Cita'App",540,1820);x.globalAlpha=1;}
   return c;
 }
